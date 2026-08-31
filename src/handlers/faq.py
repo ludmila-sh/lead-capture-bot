@@ -29,7 +29,9 @@ async def open_faq_answer(callback: CallbackQuery) -> None:
         question, answer = texts.FAQ[int(raw_index)]
     except (ValueError, IndexError):
         # Unknown / stale FAQ id — fall back to the question list.
-        logger.warning("bad faq id %r from user_id=%s", raw_index, callback.from_user.id)
+        logger.warning(
+            "bad faq id %r from user_id=%s", raw_index, callback.from_user.id
+        )
         await show(callback, texts.FAQ_INTRO, faq_list_menu())
         return
 

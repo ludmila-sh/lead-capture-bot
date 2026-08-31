@@ -21,13 +21,17 @@ logger = logging.getLogger(__name__)
 @router.message()
 async def unknown_message(message: Message) -> None:
     user_id = message.from_user.id if message.from_user else "unknown"
-    logger.info("fallback message: user_id=%s content_type=%s", user_id, message.content_type)
+    logger.info(
+        "fallback message: user_id=%s content_type=%s", user_id, message.content_type
+    )
     await message.answer(texts.FALLBACK, reply_markup=main_menu())
 
 
 @router.callback_query()
 async def unknown_callback(callback: CallbackQuery) -> None:
-    logger.info("fallback callback: data=%r user_id=%s", callback.data, callback.from_user.id)
+    logger.info(
+        "fallback callback: data=%r user_id=%s", callback.data, callback.from_user.id
+    )
     if isinstance(callback.message, Message):
         await callback.message.answer(texts.FALLBACK, reply_markup=main_menu())
     await callback.answer()

@@ -23,6 +23,7 @@ async def open_root(callback: CallbackQuery) -> None:
 
 @router.callback_query(F.data == "menu:practice")
 async def open_practice(callback: CallbackQuery) -> None:
+    # No segment context on a menu tap -> deliver the default lead magnet.
     logger.info("menu:practice by user_id=%s", callback.from_user.id)
-    text = texts.PRACTICE.format(link=texts.PRACTICE_LINK)
-    await show(callback, text, practice_menu())
+    magnet = texts.lead_magnet(texts.DEFAULT_SEGMENT)
+    await show(callback, magnet.text.format(link=magnet.link), practice_menu())

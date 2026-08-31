@@ -1,10 +1,10 @@
 """Inline keyboards. Callback data scheme:
 
-  menu:root      -> main menu
-  menu:practice  -> lead magnet screen
-  menu:faq       -> FAQ question list
-  menu:expert    -> handoff screen
-  faq:<index>    -> a single FAQ answer
+menu:root      -> main menu
+menu:practice  -> lead magnet screen
+menu:faq       -> FAQ question list
+menu:expert    -> handoff screen
+faq:<index>    -> a single FAQ answer
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ from __future__ import annotations
 from aiogram.types import InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from config import settings
+from src.config import settings
 from src.content import texts
 
 

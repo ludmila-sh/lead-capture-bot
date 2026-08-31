@@ -9,7 +9,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
-from config import settings
+from src.config import settings
 from src.handlers import faq, fallback, handoff, menu, start
 
 

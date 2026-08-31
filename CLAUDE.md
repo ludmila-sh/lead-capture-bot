@@ -62,7 +62,7 @@ template — client specifics live in content, not code.
 1. `python -m venv .venv && source .venv/bin/activate`
 2. `pip install -r requirements.txt`
 3. `cp .env.example .env` and fill `BOT_TOKEN`, `EXPERT_HANDOFF_USERNAME`, `CHANNEL_URL`
-4. `python bot.py`
+4. `python -m src.bot` (run from the repo root; code lives in the `src/` package)
 
 ## Current scope
 

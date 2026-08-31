@@ -17,11 +17,13 @@ Phased plan. Build one phase at a time. Phase 1 is the first target.
 - Safe fallback for any other input (re-show menu)
 - All texts in `content/texts.py`
 
-## Phase 2 — Deep-link entry & segment routing
-- Handle `/start <param>` from deep links (`t.me/<bot>?start=спина`)
+## Phase 2 — Deep-link entry & segment routing  *(done)*
+- Handle `/start <param>` from deep links (`t.me/<bot>?start=spina` — Telegram allows
+  only `[A-Za-z0-9_-]` in `start`, so segment keys are latin slugs: `spina` / `sheya` / `mama`)
 - Route by `param` to the matching lead magnet / segment (Спина / Шея-плечи / Мама),
-  deliver the right resource, tag the source
-- aiogram FSM or callback routing where a branch needs follow-up
+  deliver the right resource, tag the source (logged; storage in Phase 3)
+- Unknown / missing param → safe fallback (greeting + menu), raw value logged
+- Segments live in `content/texts.py` (`LEAD_MAGNETS`); `menu:practice` serves `DEFAULT_SEGMENT`
 
 ## Phase 3 — Handoff + logging
 - On "Написать эксперту" or a health question → notify the expert (their chat_id)
