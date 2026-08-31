@@ -9,6 +9,7 @@ from aiogram import F, Router
 from aiogram.types import CallbackQuery
 
 from src.content import texts
+from src.events import log_event
 from src.handlers.common import show
 from src.keyboards import faq_answer_menu, faq_list_menu
 
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 @router.callback_query(F.data == "menu:faq")
 async def open_faq_list(callback: CallbackQuery) -> None:
-    logger.info("menu:faq by user_id=%s", callback.from_user.id)
+    log_event("tap", callback.from_user, target="faq_list")
     await show(callback, texts.FAQ_INTRO, faq_list_menu())
 
 
@@ -35,6 +36,6 @@ async def open_faq_answer(callback: CallbackQuery) -> None:
         await show(callback, texts.FAQ_INTRO, faq_list_menu())
         return
 
-    logger.info("faq:%s by user_id=%s", raw_index, callback.from_user.id)
+    log_event("faq_view", callback.from_user, question=question)
     body = f"<b>{html.escape(question)}</b>\n\n{html.escape(answer)}"
     await show(callback, body, faq_answer_menu())

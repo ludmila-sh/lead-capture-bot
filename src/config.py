@@ -19,6 +19,12 @@ class Settings:
     bot_token: str
     expert_handoff_username: str
     channel_url: str
+    # Numeric chat id of the expert, so the bot can *send* them lead
+    # notifications (a bot cannot message a user by @username). Optional:
+    # if unset, handoff still works — the user just gets the link.
+    expert_chat_id: int | None
+    # Where interaction events are appended as JSON lines.
+    interaction_log_path: str
 
     @property
     def expert_url(self) -> str:
@@ -35,12 +41,27 @@ def _require(name: str) -> str:
     return value
 
 
+def _optional_int(name: str) -> int | None:
+    value = os.environ.get(name, "").strip()
+    if not value:
+        return None
+    try:
+        return int(value)
+    except ValueError:
+        raise RuntimeError(
+            f"Environment variable {name} must be an integer, got {value!r}"
+        )
+
+
 def load_settings() -> Settings:
     load_dotenv()
     return Settings(
         bot_token=_require("BOT_TOKEN"),
         expert_handoff_username=_require("EXPERT_HANDOFF_USERNAME").lstrip("@"),
         channel_url=_require("CHANNEL_URL"),
+        expert_chat_id=_optional_int("EXPERT_CHAT_ID"),
+        interaction_log_path=os.environ.get("INTERACTION_LOG_PATH", "").strip()
+        or "data/interactions.jsonl",
     )
 
 

@@ -14,7 +14,9 @@ from aiogram import Router
 from aiogram.filters import CommandObject, CommandStart
 from aiogram.types import Message
 
+from src import state
 from src.content import texts
+from src.events import log_event
 from src.keyboards import main_menu, practice_menu
 
 router = Router(name="start")
@@ -23,17 +25,18 @@ logger = logging.getLogger(__name__)
 
 @router.message(CommandStart())
 async def cmd_start(message: Message, command: CommandObject) -> None:
-    user_id = message.from_user.id if message.from_user else "unknown"
+    user = message.from_user
     raw = command.args  # text after "/start ", or None
     segment = texts.find_segment(raw)
 
     if segment is None:
-        logger.info("start: user_id=%s segment=none raw=%r", user_id, raw)
+        log_event("start", user, segment="none", raw=raw)
         await message.answer(texts.GREETING, reply_markup=main_menu())
         return
 
+    if user is not None:
+        state.remember_segment(user.id, segment)
     magnet = texts.LEAD_MAGNETS[segment]
-    # segment == source tag; full logging / storage lands in Phase 3.
-    logger.info("start: user_id=%s segment=%s (%s)", user_id, segment, magnet.label)
+    log_event("start", user, segment=segment)
     body = f"{texts.GREETING_LEAD}\n\n{magnet.text.format(link=magnet.link)}"
     await message.answer(body, reply_markup=practice_menu())

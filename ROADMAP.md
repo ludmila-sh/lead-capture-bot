@@ -25,10 +25,14 @@ Phased plan. Build one phase at a time. Phase 1 is the first target.
 - Unknown / missing param → safe fallback (greeting + menu), raw value logged
 - Segments live in `content/texts.py` (`LEAD_MAGNETS`); `menu:practice` serves `DEFAULT_SEGMENT`
 
-## Phase 3 — Handoff + logging
-- On "Написать эксперту" or a health question → notify the expert (their chat_id)
-  with short user context
-- Log interactions (file first; later spreadsheet / DB)
+## Phase 3 — Handoff + logging  *(done)*
+- On "Написать эксперту" or a health question → notify the expert (`EXPERT_CHAT_ID`,
+  optional) with short user context (name, contact, id, segment, reason, message)
+- Health questions detected by keyword list in `content/texts.py` (`HEALTH_KEYWORDS`);
+  bot never answers them — hands off + reassures the user
+- Interactions appended as JSON lines to `data/interactions.jsonl`
+  (`INTERACTION_LOG_PATH`), also echoed to stdout — see `src/events.py`
+- Last entry segment kept in memory (`src/state.py`) for handoff context
 
 ## Phase 4 — Payments & access
 - Payment link (e.g. Lava / Tribute)

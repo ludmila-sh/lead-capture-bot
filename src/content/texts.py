@@ -147,6 +147,57 @@ EXPERT = (
     "Нажмите кнопку ниже, чтобы открыть чат:"
 )
 
+# Sent to the user after we have notified the expert about a handoff.
+HANDOFF_ACK = (
+    "Я передал ваш запрос эксперту — он свяжется с вами здесь, в Telegram. "
+    "Если хотите, можете написать ему сами:"
+)
+
+# Free-text messages containing any of these (case-insensitive substring) are
+# treated as a health question -> hand off to the expert, never answered by the bot.
+HEALTH_KEYWORDS = [
+    "боль",
+    "болит",
+    "болью",
+    "ноет",
+    "защемил",
+    "защемление",
+    "спазм",
+    "поясниц",
+    "грыж",
+    "протруз",
+    "остеохондроз",
+    "сколиоз",
+    "травм",
+    "диагноз",
+    "операц",
+    "врач",
+    "мрт",
+    "давлен",
+    "головокружен",
+    "беремен",
+    "родила",
+    "послеродов",
+    "колено",
+    "сустав",
+]
+
+HEALTH_REPLY = (
+    "Спасибо, что написали. Это важный вопрос про здоровье, и отвечать на него "
+    "заочно я не могу. Я передал ваше сообщение эксперту — он свяжется с вами. "
+    "Вы также можете написать ему напрямую:"
+)
+
+# Message the bot sends to the expert's chat. All fields are filled in code.
+HANDOFF_TO_EXPERT = (
+    "🔔 <b>Новый лид</b>\n\n"
+    "Имя: {name}\n"
+    "Контакт: {contact}\n"
+    "ID: <code>{user_id}</code>\n"
+    "Сегмент: {segment}\n"
+    "Повод: {reason}"
+)
+
 # Shown for any input the bot does not understand (free text, unknown callback).
 FALLBACK = (
     "Спасибо за сообщение! Я бот и работаю по меню. Если это вопрос эксперту — "
