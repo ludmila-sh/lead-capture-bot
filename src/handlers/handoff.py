@@ -11,9 +11,9 @@ import logging
 from aiogram import F, Router
 from aiogram.types import CallbackQuery
 
-from content import texts
-from handlers.common import show
-from keyboards import expert_menu
+from src.content import texts
+from src.handlers.common import show
+from src.keyboards import expert_menu
 
 router = Router(name="handoff")
 logger = logging.getLogger(__name__)

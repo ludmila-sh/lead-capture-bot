@@ -7,9 +7,9 @@ import logging
 from aiogram import F, Router
 from aiogram.types import CallbackQuery
 
-from content import texts
-from handlers.common import show
-from keyboards import main_menu, practice_menu
+from src.content import texts
+from src.handlers.common import show
+from src.keyboards import main_menu, practice_menu
 
 router = Router(name="menu")
 logger = logging.getLogger(__name__)

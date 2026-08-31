@@ -11,8 +11,8 @@ import logging
 from aiogram import Router
 from aiogram.types import CallbackQuery, Message
 
-from content import texts
-from keyboards import main_menu
+from src.content import texts
+from src.keyboards import main_menu
 
 router = Router(name="fallback")
 logger = logging.getLogger(__name__)

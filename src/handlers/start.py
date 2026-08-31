@@ -8,8 +8,8 @@ from aiogram import Router
 from aiogram.filters import CommandStart
 from aiogram.types import Message
 
-from content import texts
-from keyboards import main_menu
+from src.content import texts
+from src.keyboards import main_menu
 
 router = Router(name="start")
 logger = logging.getLogger(__name__)

@@ -13,7 +13,7 @@ from aiogram.types import InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from config import settings
-from content import texts
+from src.content import texts
 
 
 def main_menu() -> InlineKeyboardMarkup:

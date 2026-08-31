@@ -10,7 +10,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
 from config import settings
-from handlers import faq, fallback, handoff, menu, start
+from src.handlers import faq, fallback, handoff, menu, start
 
 
 def build_dispatcher() -> Dispatcher:
