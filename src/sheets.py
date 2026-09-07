@@ -91,6 +91,9 @@ def _run() -> None:
         values = [_cell(row.get(col)) for col in COLUMNS]
         for attempt in (1, 2):
             try:
+                # Cheap guard: restores the header row if the sheet was cleared
+                # while the bot was running (one extra read per event).
+                _ensure_headers(worksheet)
                 worksheet.append_row(values, value_input_option="RAW")
                 break
             except Exception as error:  # noqa: BLE001
@@ -157,14 +160,20 @@ def _open_worksheet():
             title=settings.analytics_worksheet, rows=1000, cols=len(COLUMNS)
         )
 
-    if worksheet.row_values(1) != COLUMNS:
-        worksheet.update([COLUMNS], "A1", value_input_option="RAW")
+    _ensure_headers(worksheet)
     logger.info(
         "Google Sheets sink ready: %s / %s",
         settings.analytics_spreadsheet_id,
         settings.analytics_worksheet,
     )
     return worksheet
+
+
+def _ensure_headers(worksheet) -> None:
+    """Write the header row if it is missing or wrong (e.g. sheet was cleared)."""
+    if worksheet.row_values(1) != COLUMNS:
+        worksheet.update([COLUMNS], "A1", value_input_option="RAW")
+        logger.info("Google Sheets: (re)wrote header row")
 
 
 def _drain() -> None:
@@ -179,3 +188,49 @@ def _drain() -> None:
 
 def _cell(value: object) -> object:
     return "" if value is None else value
+
+
+def _summary_formula() -> str:
+    """A ready-to-paste QUERY that pivots the raw events by segment."""
+    src = f"'{settings.analytics_worksheet}'!A2:H"
+    return (
+        f'=QUERY({src}, "select F, count(B), '
+        "sum(if(B='magnet_delivered',1,0)), sum(if(B='handoff',1,0)) "
+        "where B is not null group by F "
+        "label F 'Segment', count(B) 'Starts', "
+        "sum(if(B='magnet_delivered',1,0)) 'Magnet', "
+        "sum(if(B='handoff',1,0)) 'Handoff'\", 0)"
+    )
+
+
+def _verify_cli() -> int:
+    """`python -m src.sheets` — connect, (re)create the header row, print status.
+
+    Run this after configuring .env, or to repair the header row after clearing
+    the sheet without restarting the bot.
+    """
+    logging.basicConfig(
+        level=logging.INFO, format="%(levelname)s %(name)s: %(message)s"
+    )
+    if not settings.analytics_enabled:
+        print(
+            "analytics not configured — set GOOGLE_SERVICE_ACCOUNT_JSON and "
+            "ANALYTICS_SPREADSHEET_ID in .env"
+        )
+        return 1
+    try:
+        _open_worksheet()
+    except Exception as error:  # noqa: BLE001
+        print(f"FAILED — {_explain(error)}")
+        return 1
+    print(
+        f"OK — worksheet '{settings.analytics_worksheet}' ready with header row.\n\n"
+        "For a summary tab: add a sheet and paste this into A1 "
+        "(swap ',' for ';' if your Sheets locale needs it):\n\n"
+        f"  {_summary_formula()}"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(_verify_cli())

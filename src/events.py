@@ -26,7 +26,7 @@ logger = logging.getLogger("events")
 _LOG_PATH = Path(settings.interaction_log_path)
 
 # Events mirrored to Google Sheets (ROADMAP Phase 4).
-_SHEET_EVENTS = {"start", "magnet_delivered", "handoff"}
+_SHEET_EVENTS = {"start", "magnet_delivered", "handoff", "subscribed", "unsubscribed"}
 
 
 def log_event(event: str, user: User | None, **fields: object) -> None:

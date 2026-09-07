@@ -7,6 +7,7 @@ content/texts.py; this module only holds secrets and per-deployment URLs.
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass
 
 from dotenv import load_dotenv
@@ -19,6 +20,10 @@ class Settings:
     bot_token: str
     expert_handoff_username: str
     channel_url: str
+    # Numeric id of the channel (e.g. "-1001234567890"), used to recognise
+    # chat_member updates for subscription tracking. Optional: for a public
+    # channel the @username is parsed from channel_url instead.
+    channel_id: str
     # Numeric chat id of the expert, so the bot can *send* them lead
     # notifications (a bot cannot message a user by @username). Optional:
     # if unset, handoff still works — the user just gets the link.
@@ -34,6 +39,12 @@ class Settings:
     @property
     def expert_url(self) -> str:
         return f"https://t.me/{self.expert_handoff_username}"
+
+    @property
+    def channel_username(self) -> str | None:
+        """@username parsed from channel_url, or None for a private invite link."""
+        match = re.search(r"t\.me/([A-Za-z0-9_]{4,})/?$", self.channel_url)
+        return match.group(1) if match else None
 
     @property
     def analytics_enabled(self) -> bool:
@@ -68,6 +79,7 @@ def load_settings() -> Settings:
         bot_token=_require("BOT_TOKEN"),
         expert_handoff_username=_require("EXPERT_HANDOFF_USERNAME").lstrip("@"),
         channel_url=_require("CHANNEL_URL"),
+        channel_id=os.environ.get("CHANNEL_ID", "").strip(),
         expert_chat_id=_optional_int("EXPERT_CHAT_ID"),
         interaction_log_path=os.environ.get("INTERACTION_LOG_PATH", "").strip()
         or "data/interactions.jsonl",

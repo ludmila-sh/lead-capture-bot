@@ -35,19 +35,24 @@ Phased plan. Build one phase at a time. Phase 1 is the first target.
 - Last entry segment kept in memory (`src/state.py`) for handoff context
 
 ## Phase 4 — Analytics in Google Sheets  *(done)*
-- Mirror funnel milestones — `start`, `magnet_delivered`, `handoff` — as rows in a
-  client-owned Google Sheet, so docs / lead magnets / analytics live in one place
+- Mirror funnel milestones — `start`, `magnet_delivered`, `handoff`,
+  `subscribed` / `unsubscribed` — as rows in a client-owned Google Sheet, so docs /
+  lead magnets / analytics live in one place
 - Write directly via `gspread` + a service account (background thread, fire-and-forget);
   `data/interactions.jsonl` stays the durable offline backup
 - Active only when `GOOGLE_SERVICE_ACCOUNT_JSON` + `ANALYTICS_SPREADSHEET_ID` are set —
   see `src/sheets.py`, `src/events.py` (`_SHEET_EVENTS`), README
+- Subscription tracking: `src/handlers/subscription.py` — bot must be channel admin;
+  `CHANNEL_ID` for a private channel, else `@username` from `CHANNEL_URL`
+- `python -m src.sheets` — verify connection / repair header row
 - `python -m src.stats [--csv]` — local per-segment report from the JSONL
-- Scope: two milestones + handoff only. Subscription / payment tracking is Phase 5.
+- Still manual (not from this bot): Instagram reach / CTR / feedback → a monthly tab
+  the expert fills in the same spreadsheet
 
 ## Phase 5 — Payments & access
-- Payment link (e.g. Lava / Tribute)
-- On payment → auto-generate a one-time invite to the closed content channel
-- Track `subscribed` / `paid` events (extend `_SHEET_EVENTS`)
+- Decide provider (Lava / Tribute / YooKassa / Telegram Stars) and access model
+- Payment link; on payment → auto-generate a one-time invite to the closed content channel
+- Track `paid` events (extend `_SHEET_EVENTS`)
 
 ## Phase 6 — Deploy
 - Switch to webhook, host on mini-PC / VPS, add a process manager
