@@ -34,10 +34,21 @@ Phased plan. Build one phase at a time. Phase 1 is the first target.
   (`INTERACTION_LOG_PATH`), also echoed to stdout — see `src/events.py`
 - Last entry segment kept in memory (`src/state.py`) for handoff context
 
-## Phase 4 — Payments & access
+## Phase 4 — Analytics in Google Sheets  *(done)*
+- Mirror funnel milestones — `start`, `magnet_delivered`, `handoff` — as rows in a
+  client-owned Google Sheet, so docs / lead magnets / analytics live in one place
+- Write directly via `gspread` + a service account (background thread, fire-and-forget);
+  `data/interactions.jsonl` stays the durable offline backup
+- Active only when `GOOGLE_SERVICE_ACCOUNT_JSON` + `ANALYTICS_SPREADSHEET_ID` are set —
+  see `src/sheets.py`, `src/events.py` (`_SHEET_EVENTS`), README
+- `python -m src.stats [--csv]` — local per-segment report from the JSONL
+- Scope: two milestones + handoff only. Subscription / payment tracking is Phase 5.
+
+## Phase 5 — Payments & access
 - Payment link (e.g. Lava / Tribute)
 - On payment → auto-generate a one-time invite to the closed content channel
+- Track `subscribed` / `paid` events (extend `_SHEET_EVENTS`)
 
-## Phase 5 — Deploy & analytics
+## Phase 6 — Deploy
 - Switch to webhook, host on mini-PC / VPS, add a process manager
-- Sync funnel events to the tracking spreadsheet
+- (spreadsheet sync now lands in Phase 4)

@@ -25,10 +25,19 @@ class Settings:
     expert_chat_id: int | None
     # Where interaction events are appended as JSON lines.
     interaction_log_path: str
+    # Google Sheets analytics sink. All optional; the sink is active only when
+    # both the service-account key path and the spreadsheet id are set.
+    google_service_account_json: str
+    analytics_spreadsheet_id: str
+    analytics_worksheet: str
 
     @property
     def expert_url(self) -> str:
         return f"https://t.me/{self.expert_handoff_username}"
+
+    @property
+    def analytics_enabled(self) -> bool:
+        return bool(self.google_service_account_json and self.analytics_spreadsheet_id)
 
 
 def _require(name: str) -> str:
@@ -62,6 +71,12 @@ def load_settings() -> Settings:
         expert_chat_id=_optional_int("EXPERT_CHAT_ID"),
         interaction_log_path=os.environ.get("INTERACTION_LOG_PATH", "").strip()
         or "data/interactions.jsonl",
+        google_service_account_json=os.environ.get(
+            "GOOGLE_SERVICE_ACCOUNT_JSON", ""
+        ).strip(),
+        analytics_spreadsheet_id=os.environ.get("ANALYTICS_SPREADSHEET_ID", "").strip(),
+        analytics_worksheet=os.environ.get("ANALYTICS_WORKSHEET", "").strip()
+        or "events",
     )
 
 

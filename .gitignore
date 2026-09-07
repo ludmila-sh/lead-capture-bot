@@ -151,6 +151,10 @@ activemq-data/
 /data/
 *.jsonl
 
+# Analytics service-account credentials
+/secrets/
+service-account*.json
+
 # Environments
 .env
 .envrc

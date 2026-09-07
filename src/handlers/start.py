@@ -40,3 +40,4 @@ async def cmd_start(message: Message, command: CommandObject) -> None:
     log_event("start", user, segment=segment)
     body = f"{texts.GREETING_LEAD}\n\n{magnet.text.format(link=magnet.link)}"
     await message.answer(body, reply_markup=practice_menu())
+    log_event("magnet_delivered", user, segment=segment)
