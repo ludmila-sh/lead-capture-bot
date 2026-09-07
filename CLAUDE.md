@@ -34,7 +34,7 @@ template — client specifics live in content, not code.
 
 ## Architecture & conventions
 
-- **All client-specific content lives in one place:** `content/texts.py` (texts, menu
+- **All client-specific content lives in one place:** `content/texts.yaml` (texts, menu
   labels, FAQ). Values that differ per deployment (handoff username, channel URL) come
   from `.env` via `config.py`. Handlers reference these — no inline strings, no hardcoded
   client data in handler logic. This lets a non-developer reconfigure the bot for a new
@@ -44,7 +44,7 @@ template — client specifics live in content, not code.
   - `config.py` — load env
   - `handlers/` — routers: `start.py`, `menu.py`, `faq.py`, `handoff.py`
   - `keyboards.py` — inline keyboards
-  - `content/texts.py` — all messages and button labels
+  - `content/texts.yaml` — all messages and button labels; `content/texts.py` loads + validates it
 - Code, filenames, identifiers in **English**; user-facing strings in **Russian**.
 - Async throughout, type hints, small focused functions.
 - Log key events (start, button taps, handoff) to stdout.

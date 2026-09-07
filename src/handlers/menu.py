@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 
 from aiogram import F, Router
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, Message
 
 from src.content import texts
 from src.events import log_event
@@ -29,3 +29,5 @@ async def open_practice(callback: CallbackQuery) -> None:
     magnet = texts.lead_magnet(texts.DEFAULT_SEGMENT)
     await show(callback, magnet.text.format(link=magnet.link), practice_menu())
     log_event("magnet_delivered", callback.from_user, segment=texts.DEFAULT_SEGMENT)
+    if isinstance(callback.message, Message):
+        await callback.message.answer(magnet.question)

@@ -14,7 +14,16 @@ python -m src.bot
 ```
 
 Required in `.env`: `BOT_TOKEN`, `EXPERT_HANDOFF_USERNAME`, `CHANNEL_URL`.
-Optional: `EXPERT_CHAT_ID` (expert lead notifications), Google Sheets analytics (below).
+Optional: `EXPERT_CHAT_ID` (expert lead notifications), `CHANNEL_ID` (private-channel
+subscription tracking), Google Sheets analytics (below).
+
+## Тексты бота
+
+Все сообщения, кнопки, лид-магниты, FAQ и `health_keywords` — в
+`src/content/texts.yaml`. Правится без кода; при старте бот проверяет файл и не
+запустится с явной ошибкой (нет ключа, магнит со ссылкой без `{link}`, FAQ не 3–5
+пунктов и т.п.). Сегменты (deep-link): `spina`, `office`, `mama`, `trener`
+(непубличный), `base` (по умолчанию).
 
 ## Аналитика в Google Sheets
 

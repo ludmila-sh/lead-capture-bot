@@ -1,78 +1,111 @@
-"""All client-facing text and button labels — the single place a non-developer edits.
+"""Loader for the client-facing text.
 
-Code/identifiers: English. User-facing strings: Russian.
-This mirrors the external "source of truth" (the scripts spreadsheet).
+All copy lives in `texts.yaml` (edit there — no Python needed). This module
+loads and validates it at import time and exposes the same names the handlers
+already use, so nothing else changes when the wording changes.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
-# --- Lead magnets / segments ----------------------------------------------
-# One entry per social-funnel segment. The key is the deep-link parameter
-# (t.me/<bot>?start=<key>) — Telegram allows only [A-Za-z0-9_-], so keys are
-# latin slugs even though the funnel talks about "спина" / "мама".
-# `link` is a placeholder resource URL — replace per deployment.
+import yaml
+
+_YAML_PATH = Path(__file__).with_name("texts.yaml")
+
+_REQUIRED_SCREENS = {
+    "greeting",
+    "menu_prompt",
+    "faq_intro",
+    "expert",
+    "handoff_ack",
+    "health_reply",
+    "fallback",
+    "handoff_to_expert",
+}
+_REQUIRED_BUTTONS = {
+    "practice",
+    "faq",
+    "expert",
+    "subscribe",
+    "write_expert",
+    "back_to_menu",
+    "back_to_faq",
+}
 
 
 @dataclass(frozen=True)
 class LeadMagnet:
-    label: str  # human name for logs / source tagging, e.g. "Спина"
-    link: str  # URL of the resource to deliver
-    text: str  # message body; may contain the "{link}" placeholder
+    label: str  # human name for logs / handoff context, e.g. "Спина"
+    link: str  # video URL (may be empty for a link-less soft path)
+    text: str  # first message; contains "{link}" when link is set
+    question: str  # open follow-up sent right after
 
 
-# Used when /start arrives with no parameter or an unknown one.
-DEFAULT_SEGMENT = "base"
+def load_texts(path: Path = _YAML_PATH) -> dict:
+    with path.open(encoding="utf-8") as fh:
+        data = yaml.safe_load(fh)
+    validate_texts(data)
+    return data
+
+
+def validate_texts(data: object) -> None:
+    """Raise RuntimeError with a clear message if the texts file is unusable."""
+    if not isinstance(data, dict):
+        raise RuntimeError("texts.yaml: top level must be a mapping")
+
+    missing_screens = _REQUIRED_SCREENS - set((data.get("screens") or {}))
+    if missing_screens:
+        raise RuntimeError(
+            f"texts.yaml: screens missing keys: {sorted(missing_screens)}"
+        )
+
+    missing_buttons = _REQUIRED_BUTTONS - set((data.get("buttons") or {}))
+    if missing_buttons:
+        raise RuntimeError(
+            f"texts.yaml: buttons missing keys: {sorted(missing_buttons)}"
+        )
+
+    magnets = data.get("lead_magnets")
+    if not isinstance(magnets, dict) or not magnets:
+        raise RuntimeError("texts.yaml: lead_magnets must be a non-empty mapping")
+    for key, magnet in magnets.items():
+        for field in ("label", "link", "text", "question"):
+            if field not in magnet:
+                raise RuntimeError(f"texts.yaml: lead_magnets.{key} missing '{field}'")
+        if magnet["link"] and "{link}" not in magnet["text"]:
+            raise RuntimeError(
+                f"texts.yaml: lead_magnets.{key}.text has a link but no '{{link}}' placeholder"
+            )
+
+    default = data.get("default_segment")
+    if default not in magnets:
+        raise RuntimeError(
+            f"texts.yaml: default_segment {default!r} is not one of {sorted(magnets)}"
+        )
+
+    faq = data.get("faq")
+    if not isinstance(faq, list) or not (3 <= len(faq) <= 5):
+        raise RuntimeError("texts.yaml: faq must be a list of 3–5 items")
+    for item in faq:
+        if not item.get("q") or not item.get("a"):
+            raise RuntimeError("texts.yaml: every faq item needs non-empty 'q' and 'a'")
+
+    if not data.get("health_keywords"):
+        raise RuntimeError("texts.yaml: health_keywords must be a non-empty list")
+
+
+_data = load_texts()
+
+# --- Segments -------------------------------------------------------------
+DEFAULT_SEGMENT: str = _data["default_segment"]
 
 LEAD_MAGNETS: dict[str, LeadMagnet] = {
-    "base": LeadMagnet(
-        label="Общая",
-        link="https://www.youtube.com/watch?v=FfyhZFAmhSE",
-        text=(
-            "Держите бесплатную практику 🎁\n\n"
-            "👉 {link}\n\n"
-            "Короткая последовательность на 15 минут — можно выполнять дома, без инвентаря.\n\n"
-            "Напишите пару слов о себе: что беспокоит и чего хотели бы достичь? "
-            "Так эксперт сможет подсказать точнее."
-        ),
-    ),
-    "spina": LeadMagnet(
-        label="Спина",
-        link="https://www.youtube.com/watch?v=GAAB323gC3M",
-        text=(
-            "Держите бесплатную практику для спины 🎁\n\n"
-            "👉 {link}\n\n"
-            "Мягкая последовательность на 15 минут, чтобы разгрузить поясницу — "
-            "дома, без инвентаря.\n\n"
-            "Напишите пару слов о себе: что беспокоит и как давно? "
-            "Так эксперт сможет подсказать точнее."
-        ),
-    ),
-    "sheya": LeadMagnet(
-        label="Шея-плечи",
-        link="https://www.youtube.com/watch?v=WfPSddHeTmo&t=1141s",
-        text=(
-            "Держите бесплатную практику для шеи и плеч 🎁\n\n"
-            "👉 {link}\n\n"
-            "15 минут мягкой работы, чтобы снять зажимы после рабочего дня — "
-            "дома, без инвентаря.\n\n"
-            "Напишите пару слов о себе: что беспокоит и как давно? "
-            "Так эксперт сможет подсказать точнее."
-        ),
-    ),
-    "mama": LeadMagnet(
-        label="Мама",
-        link="https://www.youtube.com/watch?v=xLC6SaigJsM",
-        text=(
-            "Держите бесплатную практику для мам 🎁\n\n"
-            "👉 {link}\n\n"
-            "Бережная последовательность на 15 минут для восстановления — "
-            "можно заниматься дома, пока малыш спит.\n\n"
-            "Напишите пару слов о себе: сколько времени прошло после родов и что беспокоит? "
-            "Так эксперт сможет подсказать точнее."
-        ),
-    ),
+    key: LeadMagnet(
+        label=m["label"], link=m["link"], text=m["text"], question=m["question"]
+    )
+    for key, m in _data["lead_magnets"].items()
 }
 
 
@@ -87,119 +120,28 @@ def lead_magnet(segment: str | None) -> LeadMagnet:
     return LEAD_MAGNETS.get(segment or "", LEAD_MAGNETS[DEFAULT_SEGMENT])
 
 
-# --- Button labels --------------------------------------------------------
-BTN_PRACTICE = "🧘 Практика"
-BTN_FAQ = "❓ Частые вопросы"
-BTN_EXPERT = "💬 Написать эксперту"
-BTN_SUBSCRIBE = "📣 Подписаться на канал"
-BTN_WRITE_EXPERT = "💬 Открыть чат с экспертом"
-BTN_BACK_TO_MENU = "🏠 В меню"
-BTN_BACK_TO_FAQ = "⬅️ К вопросам"
+# --- Button labels -----------------------------------------------------------
+_b = _data["buttons"]
+BTN_PRACTICE: str = _b["practice"]
+BTN_FAQ: str = _b["faq"]
+BTN_EXPERT: str = _b["expert"]
+BTN_SUBSCRIBE: str = _b["subscribe"]
+BTN_WRITE_EXPERT: str = _b["write_expert"]
+BTN_BACK_TO_MENU: str = _b["back_to_menu"]
+BTN_BACK_TO_FAQ: str = _b["back_to_faq"]
 
-# --- Screens -----------------------------------------------------------------
-GREETING = (
-    "Здравствуйте! 🙏\n\n"
-    "Это бот-помощник. Здесь можно:\n"
-    "• получить бесплатную практику;\n"
-    "• прочитать ответы на частые вопросы;\n"
-    "• написать эксперту напрямую.\n\n"
-    "Выберите, что вам интересно:"
-)
+# --- Screens ---------------------------------------------------------------
+_s = _data["screens"]
+GREETING: str = _s["greeting"]
+MENU_PROMPT: str = _s["menu_prompt"]
+FAQ_INTRO: str = _s["faq_intro"]
+EXPERT: str = _s["expert"]
+HANDOFF_ACK: str = _s["handoff_ack"]
+HEALTH_REPLY: str = _s["health_reply"]
+FALLBACK: str = _s["fallback"]
+HANDOFF_TO_EXPERT: str = _s["handoff_to_expert"]
 
-MENU_PROMPT = "Чем могу помочь?"
+# List of (question, answer). Question doubles as the button label.
+FAQ: list[tuple[str, str]] = [(item["q"], item["a"]) for item in _data["faq"]]
 
-# Shown once, right before the lead magnet, when a user arrives via a deep link.
-GREETING_LEAD = "Спасибо, что заглянули! 🙏 Ниже — обещанная практика."
-
-FAQ_INTRO = "Выберите вопрос:"
-
-# List of (question, answer). 3–5 entries. Question doubles as the button label.
-FAQ = [
-    (
-        "С чего начать новичку?",
-        "Начните с бесплатной практики из раздела «Практика» — она рассчитана на любой "
-        "уровень. Оптимально заниматься 2–3 раза в неделю.",
-    ),
-    (
-        "Нужен ли инвентарь?",
-        "Нет. Достаточно коврика и удобной одежды. Блоки и ремень при желании можно "
-        "заменить книгами и поясом.",
-    ),
-    (
-        "Сколько длится занятие?",
-        "Бесплатная практика — 15 минут. Занятия с экспертом обычно длятся 60–75 минут.",
-    ),
-    (
-        "Как проходят занятия с экспертом?",
-        "Онлайн по видеосвязи, индивидуально или в мини-группе. Расписание и стоимость "
-        "эксперт присылает в личном сообщении.",
-    ),
-    (
-        "У меня боль в спине — можно заниматься?",
-        "Это важный вопрос, и заочно на него ответить нельзя. Напишите эксперту через "
-        "раздел «Написать эксперту» — он подскажет, что подойдёт именно вам.",
-    ),
-]
-
-EXPERT = (
-    "Эксперт ответит на вопросы о занятиях, расписании и стоимости и поможет подобрать "
-    "практику под вашу ситуацию.\n\n"
-    "Нажмите кнопку ниже, чтобы открыть чат:"
-)
-
-# Sent to the user after we have notified the expert about a handoff.
-HANDOFF_ACK = (
-    "Я передал ваш запрос эксперту — он свяжется с вами здесь, в Telegram. "
-    "Если хотите, можете написать ему сами:"
-)
-
-# Free-text messages containing any of these (case-insensitive substring) are
-# treated as a health question -> hand off to the expert, never answered by the bot.
-HEALTH_KEYWORDS = [
-    "боль",
-    "болит",
-    "болью",
-    "ноет",
-    "защемил",
-    "защемление",
-    "спазм",
-    "поясниц",
-    "грыж",
-    "протруз",
-    "остеохондроз",
-    "сколиоз",
-    "травм",
-    "диагноз",
-    "операц",
-    "врач",
-    "мрт",
-    "давлен",
-    "головокружен",
-    "беремен",
-    "родила",
-    "послеродов",
-    "колено",
-    "сустав",
-]
-
-HEALTH_REPLY = (
-    "Спасибо, что написали. Это важный вопрос про здоровье, и отвечать на него "
-    "заочно я не могу. Я передал ваше сообщение эксперту — он свяжется с вами. "
-    "Вы также можете написать ему напрямую:"
-)
-
-# Message the bot sends to the expert's chat. All fields are filled in code.
-HANDOFF_TO_EXPERT = (
-    "🔔 <b>Новый лид</b>\n\n"
-    "Имя: {name}\n"
-    "Контакт: {contact}\n"
-    "ID: <code>{user_id}</code>\n"
-    "Сегмент: {segment}\n"
-    "Повод: {reason}"
-)
-
-# Shown for any input the bot does not understand (free text, unknown callback).
-FALLBACK = (
-    "Спасибо за сообщение! Я бот и работаю по меню. Если это вопрос эксперту — "
-    "нажмите «💬 Написать эксперту». А пока вот меню:"
-)
+HEALTH_KEYWORDS: list[str] = [str(k).lower() for k in _data["health_keywords"]]

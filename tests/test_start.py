@@ -21,9 +21,10 @@ async def test_deep_link_delivers_segment_magnet(interaction_log):
     msg = _message()
     await cmd_start(msg, CommandObject(command="start", args="spina"))
 
-    body = msg.answer.call_args.args[0]
-    assert texts.GREETING_LEAD in body
-    assert texts.LEAD_MAGNETS["spina"].link in body
+    magnet = texts.LEAD_MAGNETS["spina"]
+    first, second = msg.answer.call_args_list
+    assert magnet.link in first.args[0]
+    assert second.args[0] == magnet.question
 
     events = [e["event"] for e in read_events(interaction_log)]
     assert events == ["start", "magnet_delivered"]

@@ -1,5 +1,6 @@
 aiogram>=3.7,<4
 python-dotenv>=1.0
+PyYAML>=6.0
 gspread>=6.0
 black
 pytest

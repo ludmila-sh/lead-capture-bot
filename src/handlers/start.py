@@ -38,6 +38,10 @@ async def cmd_start(message: Message, command: CommandObject) -> None:
         state.remember_segment(user.id, segment)
     magnet = texts.LEAD_MAGNETS[segment]
     log_event("start", user, segment=segment)
-    body = f"{texts.GREETING_LEAD}\n\n{magnet.text.format(link=magnet.link)}"
-    await message.answer(body, reply_markup=practice_menu())
+    # First message: greeting + practice link + channel/menu buttons.
+    await message.answer(
+        magnet.text.format(link=magnet.link), reply_markup=practice_menu()
+    )
     log_event("magnet_delivered", user, segment=segment)
+    # Second message: the open question that starts a real conversation.
+    await message.answer(magnet.question)
