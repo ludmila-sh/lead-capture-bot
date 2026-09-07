@@ -38,9 +38,14 @@ def _is_target_channel(chat: Chat) -> bool:
     return True
 
 
+def _describe(chat: Chat) -> str:
+    return f"{chat.username or chat.title!r} (id={chat.id})"
+
+
 @router.chat_member(ChatMemberUpdatedFilter(JOIN_TRANSITION))
 async def on_join(event: ChatMemberUpdated) -> None:
     if not _is_target_channel(event.chat):
+        logger.info("join in non-target chat %s — ignored", _describe(event.chat))
         return
     user = event.new_chat_member.user
     segment = state.segment_of(user.id)
@@ -51,6 +56,7 @@ async def on_join(event: ChatMemberUpdated) -> None:
 @router.chat_member(ChatMemberUpdatedFilter(LEAVE_TRANSITION))
 async def on_leave(event: ChatMemberUpdated) -> None:
     if not _is_target_channel(event.chat):
+        logger.info("leave in non-target chat %s — ignored", _describe(event.chat))
         return
     user = event.new_chat_member.user
     segment = state.segment_of(user.id)
@@ -58,12 +64,23 @@ async def on_leave(event: ChatMemberUpdated) -> None:
     log_event("unsubscribed", user, segment=segment or "none")
 
 
+@router.chat_member()
+async def on_other_chat_member(event: ChatMemberUpdated) -> None:
+    # Any chat_member update that was not a clean join/leave. Logged so that a
+    # missing "subscribed" can be told apart from "update never arrived".
+    logger.info(
+        "chat_member in %s: %s -> %s (no subscribed/unsubscribed logged)",
+        _describe(event.chat),
+        event.old_chat_member.status,
+        event.new_chat_member.status,
+    )
+
+
 @router.my_chat_member()
 async def on_bot_status(event: ChatMemberUpdated) -> None:
     logger.info(
-        "bot membership in %r (id=%s): %s -> %s",
-        event.chat.title or event.chat.username,
-        event.chat.id,
+        "bot membership in %s: %s -> %s",
+        _describe(event.chat),
         event.old_chat_member.status,
         event.new_chat_member.status,
     )

@@ -44,8 +44,8 @@ def log_event(event: str, user: User | None, **fields: object) -> None:
     try:
         _LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
         with _LOG_PATH.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(record, ensure_ascii=False) + "\n")
-    except OSError as error:
+            fh.write(json.dumps(record, ensure_ascii=False, default=str) + "\n")
+    except (OSError, TypeError, ValueError) as error:
         logger.warning("could not write interaction log: %s", error)
 
     if event in _SHEET_EVENTS:

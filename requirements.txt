@@ -3,3 +3,4 @@ python-dotenv>=1.0
 gspread>=6.0
 black
 pytest
+pytest-asyncio>=0.23

@@ -38,10 +38,13 @@ async def main() -> None:
 
     await bot.delete_webhook(drop_pending_updates=True)
     me = await bot.get_me()
-    logging.info("Bot @%s started (long polling)", me.username)
     # resolve_used_update_types() adds chat_member / my_chat_member because the
     # subscription router registers handlers for them (not on by default).
-    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
+    allowed = dp.resolve_used_update_types()
+    logging.info(
+        "Bot @%s started (long polling); allowed_updates=%s", me.username, allowed
+    )
+    await dp.start_polling(bot, allowed_updates=allowed)
 
 
 if __name__ == "__main__":

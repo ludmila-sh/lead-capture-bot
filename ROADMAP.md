@@ -49,11 +49,30 @@ Phased plan. Build one phase at a time. Phase 1 is the first target.
 - Still manual (not from this bot): Instagram reach / CTR / feedback → a monthly tab
   the expert fills in the same spreadsheet
 
-## Phase 5 — Payments & access
-- Decide provider (Lava / Tribute / YooKassa / Telegram Stars) and access model
-- Payment link; on payment → auto-generate a one-time invite to the closed content channel
-- Track `paid` events (extend `_SHEET_EVENTS`)
+## Phase 5 — Payments & access  *(research done — see `docs/payments.md`)*
+- **Blocked on client actions first:** confirm expert's legal status (НПД via «Профдоход»),
+  get written МНС confirmation that yoga wellness classes qualify
+- **Now (manual):** «Профдоход» + «Оплати» link/QR the trainer sends by hand — 0% fee,
+  Belarus only; no bot change needed
+- **Later:** Lava.top for RU/abroad clients (test payout first); Tribute for a paid
+  closed channel; separate tax regime for selling video content
+- **Minimal bot step (when decided):** menu button «💳 Оплатить занятие» → `PAYMENT_URL`
+  from `.env`; log `payment_link_opened`. Real payment confirmation needs a provider
+  with an API/webhook.
 
 ## Phase 6 — Deploy
-- Switch to webhook, host on mini-PC / VPS, add a process manager
-- (spreadsheet sync now lands in Phase 4)
+- Currently: long polling on the developer's server (Koyeb) during the support window
+- Later: a host non-IT people can run (hoster.by VPS or similar), process manager /
+  auto-restart, `.env` + `secrets/` on the host, log rotation
+- Webhook instead of long polling is optional
+
+## Backlog (agreed, do later — don't lose these)
+- **Deep-link source granularity.** Encode campaign/placement in the start param
+  (`spina__reels_oct`), keep storing `raw_param` verbatim, split into
+  segment / campaign columns in the sheet. Needs a naming convention with the client.
+- **"Сводка" tab with time series.** Per-day × per-segment counts, conversion %
+  (`start → magnet → subscribed → handoff`), simple charts. Squeeze every useful
+  metric out of the raw events (time-to-handoff, drop-off, repeat visitors).
+- Table archival: **decided not to bother** — volume is tiny (~100/mo is nothing).
+  Revisit only if it ever gets large; then one tab per year.
+- `python -m src.sheets sync` — backfill sheet rows from JSONL after an outage.
