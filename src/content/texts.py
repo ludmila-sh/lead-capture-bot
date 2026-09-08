@@ -14,6 +14,11 @@ import yaml
 
 _YAML_PATH = Path(__file__).with_name("texts.yaml")
 
+# Optional portrait shown with the plain /start greeting (not the deep-link flow).
+# If the file is absent the bot sends a text-only greeting.
+_PHOTO_PATH = Path(__file__).parent / "assets" / "artem.jpg"
+GREETING_PHOTO: Path | None = _PHOTO_PATH if _PHOTO_PATH.is_file() else None
+
 _REQUIRED_SCREENS = {
     "greeting",
     "menu_prompt",
@@ -38,9 +43,10 @@ _REQUIRED_BUTTONS = {
 @dataclass(frozen=True)
 class LeadMagnet:
     label: str  # human name for logs / handoff context, e.g. "Спина"
-    link: str  # video URL (may be empty for a link-less soft path)
-    text: str  # first message; contains "{link}" when link is set
-    question: str  # open follow-up sent right after
+    link: str  # video URL — appended under the text (shows a preview card)
+    video: str  # optional Telegram file_id / .mp4 URL — sent as a video instead
+    text: str  # message body
+    question: str  # open question for Artyom's script (bot does NOT send it)
 
 
 def load_texts(path: Path = _YAML_PATH) -> dict:
@@ -74,9 +80,10 @@ def validate_texts(data: object) -> None:
         for field in ("label", "link", "text", "question"):
             if field not in magnet:
                 raise RuntimeError(f"texts.yaml: lead_magnets.{key} missing '{field}'")
-        if magnet["link"] and "{link}" not in magnet["text"]:
+        if "{link}" in magnet["text"]:
             raise RuntimeError(
-                f"texts.yaml: lead_magnets.{key}.text has a link but no '{{link}}' placeholder"
+                f"texts.yaml: lead_magnets.{key}.text must not contain '{{link}}' "
+                "— the link is appended automatically"
             )
 
     default = data.get("default_segment")
@@ -103,7 +110,11 @@ DEFAULT_SEGMENT: str = _data["default_segment"]
 
 LEAD_MAGNETS: dict[str, LeadMagnet] = {
     key: LeadMagnet(
-        label=m["label"], link=m["link"], text=m["text"], question=m["question"]
+        label=m["label"],
+        link=m["link"],
+        video=m.get("video", ""),
+        text=m["text"],
+        question=m["question"],
     )
     for key, m in _data["lead_magnets"].items()
 }

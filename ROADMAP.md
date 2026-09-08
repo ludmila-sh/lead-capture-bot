@@ -23,8 +23,14 @@ Phased plan. Build one phase at a time. Phase 1 is the first target.
 - Segments (code words → keys): СПИНА→`spina`, ОФИС→`office`, МАМА→`mama`,
   ТРЕНЕР→`trener` (soft, deep-link only, never advertised). `base` = fallback for
   a bare `/start` / unknown param.
-- Deep link → greeting + magnet + open question (two messages, instant — no timed
-  follow-ups; those stay in Instagram/ChatPlace)
+- Plain `/start` → greeting, ONE message: Artyom's photo (`src/content/assets/artem.jpg`,
+  optional) + caption + main menu.
+- `/start <segment>` → the practice, ONE message + `[📣 Подписаться на канал]` /
+  `[🏠 В меню]`:
+  * `video` set in texts.yaml → the video sent into the chat (plays inline)
+  * else → text + YouTube link (Telegram renders the preview card)
+- No photo in the segment flow, no open question, no timed follow-ups — those stay
+  in Instagram/ChatPlace.
 - Unknown / missing param → safe fallback (greeting + menu), raw value logged
 - Segments live in `content/texts.yaml` (`lead_magnets`); `menu:practice` serves `default_segment`
 

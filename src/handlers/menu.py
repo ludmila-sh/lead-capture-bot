@@ -5,12 +5,12 @@ from __future__ import annotations
 import logging
 
 from aiogram import F, Router
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery
 
 from src.content import texts
 from src.events import log_event
 from src.handlers.common import show
-from src.keyboards import main_menu, practice_menu
+from src.keyboards import magnet_menu, main_menu
 
 router = Router(name="menu")
 logger = logging.getLogger(__name__)
@@ -27,7 +27,6 @@ async def open_practice(callback: CallbackQuery) -> None:
     # No segment context on a menu tap -> deliver the default lead magnet.
     log_event("tap", callback.from_user, target="practice")
     magnet = texts.lead_magnet(texts.DEFAULT_SEGMENT)
-    await show(callback, magnet.text.format(link=magnet.link), practice_menu())
+    body = f"{magnet.text}\n\n{magnet.link}" if magnet.link else magnet.text
+    await show(callback, body, magnet_menu())
     log_event("magnet_delivered", callback.from_user, segment=texts.DEFAULT_SEGMENT)
-    if isinstance(callback.message, Message):
-        await callback.message.answer(magnet.question)

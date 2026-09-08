@@ -15,12 +15,13 @@ def test_expected_segments_present():
     assert "sheya" not in texts.LEAD_MAGNETS  # renamed to "office"
 
 
-def test_every_magnet_has_fields_and_link_placeholder_when_linked():
-    for key, magnet in texts.LEAD_MAGNETS.items():
+def test_every_magnet_has_fields():
+    for magnet in texts.LEAD_MAGNETS.values():
         assert magnet.label and magnet.text and magnet.question
         if magnet.link:
             assert magnet.link.startswith("http")
-            assert "{link}" in magnet.text, f"{key} text missing {{link}}"
+        # link is surfaced on a button, so it must NOT be baked into the text
+        assert "{link}" not in magnet.text
 
 
 @pytest.mark.parametrize(
@@ -83,7 +84,8 @@ def test_validate_accepts_minimal():
         lambda d: d["screens"].pop("greeting"),
         lambda d: d["buttons"].pop("practice"),
         lambda d: d.update(lead_magnets={}),
-        lambda d: d["lead_magnets"]["base"].update(link="http://x", text="no ph"),
+        lambda d: d["lead_magnets"]["base"].pop("question"),
+        lambda d: d["lead_magnets"]["base"].update(text="see {link} here"),
         lambda d: d.update(faq=[{"q": "x", "a": "y"}]),  # too few
         lambda d: d.update(health_keywords=[]),
         lambda d: d.update(default_segment="ghost"),

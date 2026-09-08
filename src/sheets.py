@@ -55,7 +55,8 @@ def enqueue(
     row = {
         "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "event": event,
-        "user_id": user_id,
+        # As text, so Sheets shows the id verbatim (not 4.2e8 / a trailing .0).
+        "user_id": "" if user_id is None else str(user_id),
         "username": username,
         "name": name,
         "segment": segment,

@@ -4,7 +4,13 @@
 #   * Voice: first person, as Artyom (the trainer). Address the reader as "ты".
 #   * Write each paragraph on ONE line. Leave an empty line between paragraphs
 #     (that becomes a blank line in Telegram). Don't hard-wrap inside a paragraph.
-#   * {link} in a lead magnet's `text` is replaced with that magnet's video link.
+#   * Keep the first message short — on a phone it should not fill the whole screen.
+#   * Per lead magnet:
+#       link  — YouTube (or other) URL. The bot appends it under the text so
+#               Telegram shows the video's preview card. One tap to watch.
+#       video — OPTIONAL. A Telegram file_id or a direct .mp4 URL. If set, the bot
+#               sends the video straight into the chat (plays inline, no leaving
+#               Telegram) instead of the link. Leave "" to use the link.
 #   * {name} {contact} {user_id} {segment} {reason} in `handoff_to_expert`
 #     are filled by the bot — keep them.
 #   * [ ... ] marks a spot to fill per client (prices, Zoom, city).
@@ -59,86 +65,77 @@ screens:
     Повод: {reason}
 
 # One entry per funnel segment. Key = deep-link parameter (t.me/<bot>?start=<key>),
-# latin only. `text` is the first message (with {link}); `question` is the open
-# follow-up sent right after.
+# latin only. `question` is NOT sent by the bot — it is the open question Artyom
+# asks himself in the conversation (kept here as a script; the Instagram flow
+# sends it after a delay, in Telegram there are no timed follow-ups).
 lead_magnets:
   base:
     label: "Общая"
     link: "https://www.youtube.com/watch?v=FfyhZFAmhSE"
+    video: ""
     text: |-
       Привет) Я Артём, тренер по йоге.
 
-      Держи короткую практику на 10 минут — мягко разгружает спину и шею, делается дома без инвентаря:
+      Держи короткую практику на 10 минут — разгружает спину и шею, дома без инвентаря.
 
-      👉 {link}
-
-      Если знаешь, что беспокоит больше — спина, шея и плечи или состояние после родов — напиши словом, пришлю практику точнее под тебя.
+      Если знаешь, что беспокоит больше — спина, шея-плечи или после родов — напиши словом, пришлю точнее под тебя.
     question: |-
-      Пара слов о себе: что беспокоит и чего хочешь от практики? Так я подскажу по делу, а не общими фразами. Отвечаю сам, не бот.
+      Пара слов о себе: что беспокоит и чего хочешь от практики?
 
   spina:
     label: "Спина"
     link: "https://www.youtube.com/watch?v=GAAB323gC3M"
+    video: ""
     text: |-
       Привет, Артём Сан на связи 👋
 
-      Вижу, тема здоровья спины для тебя актуальна. Держи короткую практику — три движения, десять минут, делаю её сам по утрам:
+      Тема спины тебе близка — держи короткую практику. Три движения, десять минут, делаю сам по утрам.
 
-      👉 {link}
-
-      От тебя нужны только коврик и желание. Сделай сейчас или сохрани на утро — как удобнее.
+      Нужны только коврик и желание. Сделай сейчас или сохрани на утро.
     question: |-
-      Скажи честно, раз написал про спину — значит что-то беспокоит. Расскажи в двух словах: где болит, как давно, что уже пробовал?
-
-      Спрашиваю, чтобы подсказать по твоей ситуации, а не общими фразами. Это я сам отвечаю, не бот.
+      Скажи честно, раз написал про спину — что-то беспокоит. В двух словах: где болит, как давно, что уже пробовал?
 
   office:
     label: "Шея и плечи"
     link: "https://www.youtube.com/watch?v=WfPSddHeTmo&t=1141s"
+    video: ""
     text: |-
       Привет) Артём, тренер по йоге.
 
-      Если к обеду шея не поворачивается, а плечи будто приклеились к ушам — это не «просто устал». Это тело после восьми часов у монитора. Знакомо, сам так сидел.
+      Если к обеду шея не поворачивается, а плечи будто приклеились к ушам — это тело после восьми часов у монитора. Знакомо, сам так сидел.
 
-      Держи короткую разминку на шею и плечи: пять минут, прямо за рабочим столом, вставать не надо.
-
-      👉 {link}
+      Держи разминку на шею и плечи: пять минут, прямо за столом.
     question: |-
-      Скажи — шея и плечи давно так, или накрывает ближе к концу дня?
-
-      Хочу понять, что именно у тебя зажато, чтобы подсказать по делу, а не общими словами. Отвечаю лично, не бот.
+      Шея и плечи давно так, или накрывает ближе к концу дня?
 
   mama:
     label: "Мама"
     link: "https://www.youtube.com/watch?v=xLC6SaigJsM"
+    video: ""
     text: |-
       Привет, на связи Артём Сан 👋
 
-      Если руки всё время заняты малышом, а спина и шея уже гудят — держи короткую практику без сложных поз. Её можно сделать, пока малыш спит.
+      Руки заняты малышом, а спина и шея уже гудят? Держи короткую практику без сложных поз — можно сделать, пока малыш спит.
 
-      👉 {link}
-
-      От тебя только 10 минут, коврик и желание. Сделай, когда появится окно — хоть сегодня, хоть завтра утром.
+      Только 10 минут, коврик и желание.
     question: |-
-      Расскажи, как ты сейчас — что даёт о себе знать сильнее всего? Спина, шея, или просто ни на что нет сил?
-
-      Хочу подсказать именно под твою ситуацию. Это я лично, не бот.
+      Расскажи, как ты сейчас — что даёт о себе знать сильнее всего? Спина, шея, или просто нет сил?
 
   # Soft path — reachable only by ?start=trener, never advertised publicly.
-  # No video yet: fill `link` or leave it empty (then {link} is not required).
   trener:
     label: "Тренер"
     link: ""
+    video: ""
     text: |-
       Привет) Артём на связи.
 
-      Раз спросил про путь тренера — расскажу без прикрас, как это устроено у меня через Fysom. Это не «быстрые деньги», а профессия, которой учатся.
+      Раз спросил про путь тренера — расскажу без прикрас, как это устроено у меня через Fysom. Это не «быстрые деньги», а профессия.
 
       [ссылка на разбор / материал]
 
-      Посмотри, и если откликнется — напиши, разберём твою ситуацию.
+      Посмотри — если откликнется, напиши, разберём твою ситуацию.
     question: |-
-      Ты сейчас уже преподаёшь или только думаешь начать? От этого зависит, с чего тебе заходить.
+      Ты уже преподаёшь или только думаешь начать? От этого зависит, с чего заходить.
 
 # 3–5 questions. `q` doubles as the button label. [ ... ] — fill per client.
 faq:

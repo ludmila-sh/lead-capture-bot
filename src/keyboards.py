@@ -25,7 +25,8 @@ def main_menu() -> InlineKeyboardMarkup:
     return kb.as_markup()
 
 
-def practice_menu() -> InlineKeyboardMarkup:
+def magnet_menu() -> InlineKeyboardMarkup:
+    """Shown with a lead magnet: subscribe to the channel, back to menu."""
     kb = InlineKeyboardBuilder()
     kb.button(text=texts.BTN_SUBSCRIBE, url=settings.channel_url)
     kb.button(text=texts.BTN_BACK_TO_MENU, callback_data="menu:root")
