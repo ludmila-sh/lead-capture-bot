@@ -58,6 +58,17 @@ Phased plan. Build one phase at a time. Phase 1 is the first target.
 - Still manual (not from this bot): Instagram reach / CTR / feedback → a monthly tab
   the expert fills in the same spreadsheet
 
+## Phase 4b — Live text editing  *(done)*
+- Client edits a `Тексты бота` (`key | value`) tab in the same spreadsheet; the bot
+  swaps its texts without a restart — `src/text_overrides.py`, `src/content/texts.py`
+  (`apply_overrides`, PEP 562 `__getattr__`)
+- Reload: on boot, every `TEXTS_RELOAD_SECONDS` (default 180), and on `/reload`
+  from `ADMIN_IDS` (`src/handlers/admin.py`)
+- Invalid edits rejected as a whole — last good texts kept, reason logged
+- Tab template seeded by `scripts/build_workspace.py`
+- Future: a Google Apps Script "Apply" button hitting the bot directly (needs an
+  HTTP endpoint — deferred with the webhook switch)
+
 ## Phase 5 — Payments & access  *(research done — see `docs/payments.md`)*
 - **Blocked on client actions first:** confirm expert's legal status (НПД via «Профдоход»),
   get written МНС confirmation that yoga wellness classes qualify

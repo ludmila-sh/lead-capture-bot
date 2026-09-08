@@ -35,6 +35,13 @@ class Settings:
     google_service_account_json: str
     analytics_spreadsheet_id: str
     analytics_worksheet: str
+    # Live text overrides: a worksheet (key | value) in the analytics spreadsheet
+    # the client edits; the bot re-reads it on a timer and on /reload. Needs the
+    # same Google Sheets access as analytics.
+    texts_worksheet: str
+    texts_reload_seconds: int  # 0 = never auto-reload
+    # Telegram user ids allowed to run /reload. Defaults to {expert_chat_id}.
+    admin_ids: frozenset[int]
 
     @property
     def expert_url(self) -> str:
@@ -73,14 +80,25 @@ def _optional_int(name: str) -> int | None:
         )
 
 
+def _parse_ids(raw: str, fallback: int | None) -> frozenset[int]:
+    ids = {
+        int(tok) for tok in raw.replace(",", " ").split() if tok.lstrip("-").isdigit()
+    }
+    if not ids and fallback is not None:
+        ids.add(fallback)
+    return frozenset(ids)
+
+
 def load_settings() -> Settings:
     load_dotenv()
+    expert_chat_id = _optional_int("EXPERT_CHAT_ID")
+    reload_seconds = _optional_int("TEXTS_RELOAD_SECONDS")
     return Settings(
         bot_token=_require("BOT_TOKEN"),
         expert_handoff_username=_require("EXPERT_HANDOFF_USERNAME").lstrip("@"),
         channel_url=_require("CHANNEL_URL"),
         channel_id=os.environ.get("CHANNEL_ID", "").strip(),
-        expert_chat_id=_optional_int("EXPERT_CHAT_ID"),
+        expert_chat_id=expert_chat_id,
         interaction_log_path=os.environ.get("INTERACTION_LOG_PATH", "").strip()
         or "data/interactions.jsonl",
         google_service_account_json=os.environ.get(
@@ -89,6 +107,9 @@ def load_settings() -> Settings:
         analytics_spreadsheet_id=os.environ.get("ANALYTICS_SPREADSHEET_ID", "").strip(),
         analytics_worksheet=os.environ.get("ANALYTICS_WORKSHEET", "").strip()
         or "events",
+        texts_worksheet=os.environ.get("TEXTS_WORKSHEET", "").strip() or "Тексты бота",
+        texts_reload_seconds=180 if reload_seconds is None else reload_seconds,
+        admin_ids=_parse_ids(os.environ.get("ADMIN_IDS", ""), expert_chat_id),
     )
 
 

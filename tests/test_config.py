@@ -18,6 +18,9 @@ def _make(**overrides) -> Settings:
         google_service_account_json="",
         analytics_spreadsheet_id="",
         analytics_worksheet="events",
+        texts_worksheet="Тексты бота",
+        texts_reload_seconds=0,
+        admin_ids=frozenset(),
     )
     base.update(overrides)
     return Settings(**base)

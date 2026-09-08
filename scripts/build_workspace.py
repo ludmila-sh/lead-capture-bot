@@ -135,10 +135,11 @@ def build() -> None:
     start["A" + str(r + 1)] = "КАК УСТРОЕН ЭТОТ ФАЙЛ"
     start["A" + str(r + 1)].font = HEAD_FONT
     guide = [
+        "Тексты бота — меняешь тут, бот подхватывает сам. НЕ переименовывай.",
         "📈 Дашборд — сводные цифры воронки. Ничего не трогай, обновляется сам.",
         "Аналитика — бот пишет сюда каждое действие. НЕ переименовывай вкладку.",
         "👥 Клиенты — веди руками: лид → пробное → активен → ушёл.",
-        "💬 Скрипты — тексты автоответов (Telegram и Instagram). Правишь тут.",
+        "💬 Скрипты Instagram — автоответы ChatPlace (это НЕ бот).",
         "🧪 Тест гипотез / 📅 Контент-план — для рекламы и съёмок.",
     ]
     for i, line in enumerate(guide, start=r + 2):
@@ -156,13 +157,16 @@ def build() -> None:
             cell.alignment = WRAP
     start.freeze_panes = "A4"
 
-    # 2 — 📈 Дашборд (new)
+    # 2 — Тексты бота (the bot reads overrides from here; keep the exact name)
+    _build_bot_texts(wb)
+
+    # 3 — 📈 Дашборд (new)
     _build_dashboard(wb)
 
-    # 3 — 👥 Клиенты (mini-CRM; absorbs Воронка)
+    # 4 — 👥 Клиенты (mini-CRM; absorbs Воронка)
     _build_clients(wb, src)
 
-    # 4 — Аналитика (bot-owned; keep exact name, header row only)
+    # 5 — Аналитика (bot-owned; keep exact name, header row only)
     an = wb.create_sheet("Аналитика")
     header = [
         "timestamp",
@@ -180,21 +184,16 @@ def build() -> None:
     an.column_dimensions["C"].number_format = "@"  # user_id as text
     _autosize(an, {1: 22, 2: 18, 3: 16, 4: 18, 5: 18, 6: 12, 7: 14, 8: 26})
 
-    # 5–8 — scripts & marketing (verbatim copies with a note)
-    _copy_sheet(
-        src["Скрипты Телеграм бота"],
-        wb,
-        "💬 Скрипты Telegram",
-        "Тексты Telegram-бота. АКТУАЛЬНЫЕ тексты живут в проекте (content/texts.yaml); "
-        "здесь — сценарий и FAQ для согласования с Артёмом. Меню бота: Практика / "
-        "Частые вопросы / Написать Артёму. Оплаты и авто-доступа пока нет.",
-    )
+    # 6–8 — scripts & marketing (verbatim copies with a note).
+    # No "Скрипты Telegram" tab: the single source of truth for bot copy is the
+    # «Тексты бота» tab above (the bot reads it live).
     _copy_sheet(
         src["Скрипты автоответов в Instagram"],
         wb,
         "💬 Скрипты Instagram",
-        "Автоответы в Instagram/ChatPlace (это НЕ Telegram-бот). Кодовые слова: "
-        "СПИНА, ОФИС, МАМА, ТРЕНЕР. Ссылки в бот: t.me/<bot>?start=spina|office|mama|trener.",
+        "Автоответы в Instagram/ChatPlace (это НЕ Telegram-бот — тексты бота на "
+        "вкладке «Тексты бота»). Кодовые слова: СПИНА, ОФИС, МАМА, ТРЕНЕР. "
+        "Ссылки в бот: t.me/<bot>?start=spina|office|mama|trener.",
     )
     _copy_sheet(
         src["Тест гипотез"],
@@ -223,6 +222,62 @@ def _section(ws, coord: str, text: str) -> None:
     ws[coord].fill = HEAD_FILL
 
 
+def _build_bot_texts(wb: Workbook) -> None:
+    """Seed the «Тексты бота» tab: key | value | hint. Bot re-reads it live."""
+    ws = wb.create_sheet("Тексты бота")
+    ws["A1"] = "Тексты бота"
+    ws["A1"].font = TITLE_FONT
+    ws["A2"] = (
+        "Меняй столбец «Значение» — бот подхватит сам в течение пары минут "
+        "(или сразу, если отправить боту /reload). Пустая ячейка = текст из кода. "
+        "Не переименовывай вкладку. Ключи не трогай."
+    )
+    ws["A2"].font = NOTE_FONT
+    ws.append([])
+    for c, h in enumerate(("Ключ", "Значение", "Что это"), start=1):
+        cell = ws.cell(row=4, column=c, value=h)
+        cell.font = HEAD_FONT
+        cell.fill = HEAD_FILL
+
+    t = _TEXTS
+    rows: list[tuple[str, str, str]] = []
+    screen_hint = {
+        "greeting": "приветствие на /start без кодового слова",
+        "menu_prompt": "подпись над кнопками меню",
+        "faq_intro": "текст над списком частых вопросов",
+        "expert": "экран «Написать Артёму»",
+        "handoff_ack": "ответ пользователю после передачи эксперту",
+        "health_reply": "ответ на вопрос о здоровье/боли",
+        "fallback": "ответ на непонятный ввод",
+    }
+    for key, hint in screen_hint.items():
+        rows.append((f"screens.{key}", t["screens"][key], hint))
+    for key, val in t["buttons"].items():
+        rows.append((f"buttons.{key}", val, "надпись на кнопке"))
+    for seg, m in t["lead_magnets"].items():
+        for field, hint in (
+            ("label", "название сегмента (для отчётов)"),
+            ("link", "ссылка на видео-урок"),
+            ("video", "необяз.: Telegram file_id / .mp4 — тогда шлём видео файлом"),
+            ("text", "сообщение с практикой по этому кодовому слову"),
+        ):
+            rows.append((f"lead_magnets.{seg}.{field}", str(m.get(field, "")), hint))
+    for i, item in enumerate(t["faq"], start=1):
+        rows.append((f"faq.{i}.q", item["q"], "вопрос (он же надпись на кнопке)"))
+        rows.append((f"faq.{i}.a", item["a"], "ответ"))
+    rows.append(("default_segment", t["default_segment"], "магнит по умолчанию"))
+
+    for r, (key, value, hint) in enumerate(rows, start=5):
+        ws.cell(row=r, column=1, value=key)
+        ws.cell(row=r, column=2, value=value)
+        ws.cell(row=r, column=3, value=hint)
+    ws.freeze_panes = "A5"
+    _autosize(ws, {1: 26, 2: 70, 3: 44})
+    for row in ws.iter_rows():
+        for cell in row:
+            cell.alignment = WRAP
+
+
 def _build_dashboard(wb: Workbook) -> None:
     ws = wb.create_sheet("📈 Дашборд")
     ws["A1"] = "📈 Дашборд"
@@ -244,7 +299,8 @@ def _build_dashboard(wb: Workbook) -> None:
         ("Обращений к Артёму", f'=COUNTIF({a}!B:B,"handoff")', False),
         (
             "Уникальных людей",
-            f'=IFERROR(COUNTA(UNIQUE(FILTER({a}!C2:C,{a}!C2:C<>""))),0)',
+            f"=IF(COUNTA({a}!C2:C)=0,0,"
+            f'COUNTA(UNIQUE(FILTER({a}!C2:C,{a}!C2:C<>""))))',
             False,
         ),
         ("", "", False),

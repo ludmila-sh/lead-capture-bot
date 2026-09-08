@@ -6,6 +6,14 @@ from src.content import texts
 from src.content.texts import validate_texts
 
 
+@pytest.fixture(autouse=True)
+def _restore_texts():
+    """apply_overrides swaps a module global — put it back after each test."""
+    saved = texts.current()
+    yield
+    texts._current = saved
+
+
 def test_default_segment_exists():
     assert texts.DEFAULT_SEGMENT in texts.LEAD_MAGNETS
 
@@ -98,3 +106,68 @@ def test_validate_rejects_broken(mutate):
     mutate(data)
     with pytest.raises(RuntimeError):
         validate_texts(data)
+
+
+# --- live overrides --------------------------------------------------------
+
+
+def test_apply_overrides_swaps_values():
+    applied = texts.apply_overrides(
+        {
+            "screens.greeting": "новый привет",
+            "buttons.practice": "🎁 Практика",
+            "lead_magnets.spina.text": "новый текст про спину",
+            "faq.1.q": "Новый первый вопрос?",
+        }
+    )
+    assert set(applied) == {
+        "screens.greeting",
+        "buttons.practice",
+        "lead_magnets.spina.text",
+        "faq.1.q",
+    }
+    assert texts.GREETING == "новый привет"
+    assert texts.BTN_PRACTICE == "🎁 Практика"
+    assert texts.LEAD_MAGNETS["spina"].text == "новый текст про спину"
+    assert texts.FAQ[0][0] == "Новый первый вопрос?"
+
+
+def test_apply_overrides_ignores_unknown_and_blank_keys():
+    applied = texts.apply_overrides(
+        {"totally.bogus": "x", "screens.greeting": "  ", "lead_magnets.ghost.text": "y"}
+    )
+    assert applied == []
+    assert texts.GREETING != "  "
+
+
+def test_apply_overrides_rejects_invalid_and_keeps_current():
+    before = texts.GREETING
+    with pytest.raises(RuntimeError):
+        texts.apply_overrides({"default_segment": "nonexistent"})
+    assert texts.GREETING == before  # unchanged
+
+
+def test_module_getattr_reads_live_bundle():
+    texts.apply_overrides({"screens.menu_prompt": "меню?"})
+    # both access styles see the same swapped value
+    assert texts.MENU_PROMPT == "меню?"
+    assert texts.current().MENU_PROMPT == "меню?"
+
+
+@pytest.mark.parametrize(
+    "key, ok",
+    [
+        ("faq.1.a", True),
+        ("screens.greeting", True),
+        ("buttons.practice", True),
+        ("lead_magnets.spina.text", True),
+        ("default_segment", True),
+        ("  faq.2.q  ", True),
+        ("Ключ", False),
+        ("Значение", False),
+        ("", False),
+        ("random.thing", False),
+    ],
+)
+def test_is_override_key(key, ok):
+    assert texts.is_override_key(key) is ok
