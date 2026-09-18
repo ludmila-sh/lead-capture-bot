@@ -121,7 +121,7 @@
   - [ ] `lead_magnets.<key>.text` для всех сегментов (`.question` бот не шлёт —
         это шпаргалка для Артёма)
   - [ ] `faq` — 3–5 вопросов-ответов (цены, Zoom, город — заполнить `[ ... ]`)
-  - [ ] `screens.expert`, `handoff_ack`, `safety_note`, `fallback`
+  - [ ] `screens.handoff_ack`, `safety_note`, `fallback`
 - [ ] `health_keywords` — не триггерит хендофф (детект отключён намеренно, см.
       CLAUDE.md), список остался в `texts.yaml` только для справки/на будущее.
 - [ ] Deep-link ссылки для Instagram / ChatPlace: `https://t.me/<bot>?start=spina`

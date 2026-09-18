@@ -70,11 +70,18 @@ Phased plan. Build one phase at a time. Phase 1 is the first target.
   swaps its texts without a restart — `src/text_overrides.py`, `src/content/texts.py`
   (`apply_overrides`, PEP 562 `__getattr__`)
 - Reload: on boot, every `TEXTS_RELOAD_SECONDS` (default 180), and on `/reload`
-  from `ADMIN_IDS` (`src/handlers/admin.py`)
-- `/health` (or `/status`), same `ADMIN_IDS` gate — manual "is it alive" check:
-  uptime, today's event count from the JSONL, Google Sheets reachability (last
-  known outcome from the sink, via `sheets.health()`). Silent for non-admins;
-  not a monitoring endpoint, no HTTP server
+  from `ADMIN_IDS` (`src/handlers/admin.py`) — silent for non-admins (no reply
+  at all, so a random user can't tell the command exists)
+- `/health`, same `ADMIN_IDS` gate, same silent-for-non-admins rule — manual
+  "is it alive" check: uptime, today's event count from the JSONL, Google
+  Sheets reachability (last known outcome from the sink, via `sheets.health()`).
+  Not a monitoring endpoint, no HTTP server
+- `/status`, same gate — weekly lead summary for the expert (event counts —
+  starts, magnets delivered, subscribed/unsubscribed, handoffs — over the last
+  7 days), read straight from the local JSONL, on demand only (no scheduler).
+  Deliberately separate from `/health`: different audience (expert vs.
+  developer) and different question ("how's the funnel doing" vs. "is the bot
+  alive")
 - Invalid edits rejected as a whole — last good texts kept, reason logged
 - Tab template seeded by `scripts/build_workspace.py`
 - Future: a Google Apps Script "Apply" button hitting the bot directly (needs an

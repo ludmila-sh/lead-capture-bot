@@ -29,7 +29,6 @@ _REQUIRED_SCREENS = {
     "greeting",
     "menu_prompt",
     "faq_intro",
-    "expert",
     "handoff_ack",
     "safety_note",
     "fallback",
@@ -73,7 +72,6 @@ class Texts:
     GREETING: str
     MENU_PROMPT: str
     FAQ_INTRO: str
-    EXPERT: str
     HANDOFF_ACK: str
     SAFETY_NOTE: str
     FALLBACK: str
@@ -156,7 +154,6 @@ def _build(data: dict) -> Texts:
         GREETING=s["greeting"],
         MENU_PROMPT=s["menu_prompt"],
         FAQ_INTRO=s["faq_intro"],
-        EXPERT=s["expert"],
         HANDOFF_ACK=s["handoff_ack"],
         SAFETY_NOTE=s["safety_note"],
         FALLBACK=s["fallback"],
