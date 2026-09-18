@@ -48,11 +48,13 @@ screens:
   handoff_ack: |-
     Передал Артёму, что ты хочешь с ним связатсья. Он напишет тебе в Telegram. Можешь и сам ему написать:
 
-  health_reply: |-
-    Спасибо, что написал. Вопросы про боль и здоровье я заочно не разбираю, тут нужен живой разговор. Передал твоё сообщение Артёму, он свяжется. Можешь и сам ему написать:
-
   fallback: |-
-    Я по делу помогаю: практика, частые вопросы, связь с Артёмом. Если это вопрос Артёму, жми «💬 Написать Артёму». А пока держи меню 👇
+    Я — бот-помощник Артёма, отвечаю через кнопки 🙂 Вот что есть: практика, частые вопросы, связь с Артёмом. Выбирай 👇
+
+  # Appended after the practice text (start.py, menu.py) — safety disclaimer,
+  # not a handoff trigger. Free text is never scanned for health keywords.
+  safety_note: |-
+    Если сейчас острая боль, травма или обострение — практику лучше отложить и сначала сходить к врачу. Если что-то беспокоит и непонятно, можно ли тебе заниматься — просто напиши мне, отвечу лично.
 
   # Sent to the expert's chat on a handoff. Keep the {placeholders} and HTML tags.
   handoff_to_expert: |-
@@ -160,8 +162,10 @@ faq:
     a: |-
       Нет. Я работаю с йогой как с упражнениями для тела — без мантр, медитаций и философии. Просто движения, которые убирают зажимы.
 
-# Free-text messages containing any of these substrings (case-insensitive) are
-# treated as a health question: never answered by the bot, always handed to Artyom.
+# NOTE: kept for reference only — auto-detection is disabled on purpose (see
+# CLAUDE.md / handoff.py). Free text is never scanned against this list anymore;
+# the only handoff trigger is the "💬 Написать эксперту" button. The disclaimer
+# about acute pain/injury lives in `screens.safety_note` instead.
 health_keywords:
   - боль
   - болит

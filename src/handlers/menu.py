@@ -28,5 +28,6 @@ async def open_practice(callback: CallbackQuery) -> None:
     log_event("tap", callback.from_user, target="practice")
     magnet = texts.lead_magnet(texts.DEFAULT_SEGMENT)
     body = f"{magnet.text}\n\n{magnet.link}" if magnet.link else magnet.text
+    body += f"\n\n{texts.SAFETY_NOTE}"
     await show(callback, body, magnet_menu())
     log_event("magnet_delivered", callback.from_user, segment=texts.DEFAULT_SEGMENT)

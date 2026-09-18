@@ -42,7 +42,8 @@ async def test_deep_link_delivers_segment_magnet_in_one_message(interaction_log)
 
     body = msg.answer.call_args.args[0]
     assert body.startswith(magnet.text)
-    assert body.endswith(magnet.link)  # link appended -> Telegram shows the preview
+    assert magnet.link in body  # link appended -> Telegram shows the preview
+    assert body.endswith(texts.SAFETY_NOTE)  # safety disclaimer appended last
 
     events = [e["event"] for e in read_events(interaction_log)]
     assert events == ["start", "magnet_delivered"]
@@ -65,7 +66,9 @@ async def test_deep_link_with_video_sends_video(interaction_log, monkeypatch):
 
     msg.answer_video.assert_awaited_once()
     assert msg.answer_video.call_args.args[0] == "BAAC-file-id-123"
-    assert msg.answer_video.call_args.kwargs["caption"] == vid_magnet.text
+    caption = msg.answer_video.call_args.kwargs["caption"]
+    assert caption.startswith(vid_magnet.text)
+    assert caption.endswith(texts.SAFETY_NOTE)
     assert msg.answer.await_count == 0
 
 

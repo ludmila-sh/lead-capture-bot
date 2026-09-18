@@ -28,9 +28,13 @@ template — client specifics live in content, not code.
 - **The bot must never crash on unexpected input.** Any unknown message or callback →
   a safe fallback (show the menu again) or handoff. Losing a lead to an error is the
   worst possible failure.
-- **The bot answers only FAQ and logistics automatically.** Anything about health,
-  pain, diagnoses, or a real sales conversation → hand off to the human expert.
-  No medical advice, ever.
+- **The bot answers only FAQ and logistics automatically.** No medical advice,
+  ever — health, pain, diagnoses, and real sales conversations are for the human
+  expert, not the bot. The single handoff trigger is a deliberate tap on
+  "💬 Написать эксперту"; the bot never scans free text for health keywords or
+  auto-forwards it (see `src/handlers/handoff.py`). A static safety disclaimer
+  about acute pain/injury (`screens.safety_note`) is appended after every
+  practice delivery — it's a caveat, not a handoff trigger.
 
 ## Architecture & conventions
 

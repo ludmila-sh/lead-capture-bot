@@ -1,12 +1,11 @@
 """Написать эксперту — hand the lead to the human expert.
 
-Two triggers:
-  * the "💬 Написать эксперту" button;
-  * a free-text message that looks like a health question (bot never answers
-    those — see CLAUDE.md).
+Single trigger: the "💬 Написать эксперту" button (`menu:expert`) — a deliberate
+tap is a real lead. Free text is never scanned for health keywords or anything
+else; unrecognised input falls through to `handlers/fallback.py`.
 
-Both notify the expert's chat (if EXPERT_CHAT_ID is set) with short context
-and record a "handoff" interaction event.
+Notifies the expert's chat (if EXPERT_CHAT_ID is set) with short context and
+records a "handoff" interaction event.
 """
 
 from __future__ import annotations
@@ -27,14 +26,6 @@ from src.keyboards import expert_menu
 
 router = Router(name="handoff")
 logger = logging.getLogger(__name__)
-
-
-def is_health_question(message: Message) -> bool:
-    """True if a plain-text message mentions health/pain — a handoff trigger."""
-    text = (message.text or "").strip().lower()
-    if not text or text.startswith("/"):
-        return False
-    return any(keyword in text for keyword in texts.HEALTH_KEYWORDS)
 
 
 async def notify_expert(message_or_cb: Message | CallbackQuery, reason: str) -> None:
@@ -83,10 +74,3 @@ async def open_expert(callback: CallbackQuery) -> None:
     logger.info("handoff requested by user_id=%s", callback.from_user.id)
     await notify_expert(callback, reason="нажал «Написать эксперту»")
     await show(callback, texts.HANDOFF_ACK, expert_menu())
-
-
-@router.message(is_health_question)
-async def health_question(message: Message) -> None:
-    logger.info("health question from user_id=%s", message.from_user.id)
-    await notify_expert(message, reason="вопрос о здоровье")
-    await message.answer(texts.HEALTH_REPLY, reply_markup=expert_menu())

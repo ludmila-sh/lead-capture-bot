@@ -35,10 +35,13 @@ Phased plan. Build one phase at a time. Phase 1 is the first target.
 - Segments live in `content/texts.yaml` (`lead_magnets`); `menu:practice` serves `default_segment`
 
 ## Phase 3 — Handoff + logging  *(done)*
-- On "Написать эксперту" or a health question → notify the expert (`EXPERT_CHAT_ID`,
+- On "Написать эксперту" (only trigger) → notify the expert (`EXPERT_CHAT_ID`,
   optional) with short user context (name, contact, id, segment, reason, message)
-- Health questions detected by keyword list in `content/texts.yaml` (`health_keywords`);
-  bot never answers them — hands off + reassures the user
+- No auto-detection of health questions — a deliberate button tap is the only
+  signal that counts as a lead. `health_keywords` stays in `content/texts.yaml`
+  for reference but no longer triggers anything; the acute pain/injury
+  disclaimer is a static `screens.safety_note` appended after every practice
+  delivery, not a handoff trigger. Free text falls through to the safe fallback.
 - Interactions appended as JSON lines to `data/interactions.jsonl`
   (`INTERACTION_LOG_PATH`), also echoed to stdout — see `src/events.py`
 - Last entry segment kept in memory (`src/state.py`) for handoff context

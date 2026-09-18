@@ -7,25 +7,28 @@ from unittest.mock import AsyncMock
 import pytest
 
 from src.config import settings
-from src.handlers import handoff
+from src.content import texts
+from src.handlers import fallback, handoff
 from tests.conftest import read_events
 
 
-@pytest.mark.parametrize(
-    "text, expected",
-    [
-        ("у меня болит спина", True),
-        ("после родов тяжело даётся наклон, болит поясница", True),
-        ("грыжа l5-s1, можно заниматься?", True),
-        ("сколько стоит абонемент?", False),
-        ("во сколько занятие в четверг?", False),
-        ("/start spina", False),
-        ("", False),
-    ],
-)
-def test_is_health_question(text, expected):
-    msg = SimpleNamespace(text=text)
-    assert handoff.is_health_question(msg) is expected
+async def test_free_text_with_health_keyword_falls_back_without_notifying_expert(
+    interaction_log,
+):
+    """Free text is never scanned for health keywords — it's a plain fallback."""
+    message = SimpleNamespace(
+        text="у меня болит спина",
+        content_type="text",
+        from_user=SimpleNamespace(id=555, username="lead", full_name="Лид Лидов"),
+        answer=AsyncMock(),
+    )
+    await fallback.unknown_message(message)
+
+    message.answer.assert_awaited_once()
+    assert message.answer.call_args.args[0] == texts.FALLBACK
+    rec = read_events(interaction_log)[0]
+    assert rec["event"] == "fallback"
+    assert not hasattr(handoff, "is_health_question")
 
 
 def _carrier(text=None, user_id=555):

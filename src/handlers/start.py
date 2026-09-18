@@ -45,14 +45,16 @@ async def _send_greeting(message: Message) -> None:
 async def _deliver_magnet(message: Message, magnet: LeadMagnet) -> None:
     """One message with the practice: video file, or text + link preview."""
     if magnet.video:
+        caption = f"{magnet.text}\n\n{texts.SAFETY_NOTE}"
         try:
             await message.answer_video(
-                magnet.video, caption=magnet.text, reply_markup=magnet_menu()
+                magnet.video, caption=caption, reply_markup=magnet_menu()
             )
             return
         except TelegramAPIError as error:
             logger.warning("video send failed, falling back to link: %s", error)
     body = f"{magnet.text}\n\n{magnet.link}" if magnet.link else magnet.text
+    body += f"\n\n{texts.SAFETY_NOTE}"
     await message.answer(body, reply_markup=magnet_menu())
 
 

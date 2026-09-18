@@ -31,7 +31,7 @@ _REQUIRED_SCREENS = {
     "faq_intro",
     "expert",
     "handoff_ack",
-    "health_reply",
+    "safety_note",
     "fallback",
     "handoff_to_expert",
 }
@@ -75,7 +75,7 @@ class Texts:
     FAQ_INTRO: str
     EXPERT: str
     HANDOFF_ACK: str
-    HEALTH_REPLY: str
+    SAFETY_NOTE: str
     FALLBACK: str
     HANDOFF_TO_EXPERT: str
     BTN_PRACTICE: str
@@ -158,7 +158,7 @@ def _build(data: dict) -> Texts:
         FAQ_INTRO=s["faq_intro"],
         EXPERT=s["expert"],
         HANDOFF_ACK=s["handoff_ack"],
-        HEALTH_REPLY=s["health_reply"],
+        SAFETY_NOTE=s["safety_note"],
         FALLBACK=s["fallback"],
         HANDOFF_TO_EXPERT=s["handoff_to_expert"],
         BTN_PRACTICE=b["practice"],
