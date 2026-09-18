@@ -11,15 +11,7 @@ from src.config import settings
 def test_enqueue_is_noop_when_disabled():
     assert settings.analytics_enabled is False  # conftest
     before = sheets._queue.qsize()
-    sheets.enqueue(
-        "start",
-        user_id=1,
-        username="u",
-        name="U",
-        segment="spina",
-        raw_param="spina",
-        reason="",
-    )
+    sheets.enqueue("start", user_key="abc1234567", segment="spina", status="")
     assert sheets._queue.qsize() == before
 
 
@@ -51,7 +43,7 @@ def test_summary_formula_uses_worksheet_name(monkeypatch):
         dataclasses.replace(settings, analytics_worksheet="Аналитика"),
     )
     formula = sheets._summary_formula()
-    assert formula.startswith("=QUERY('Аналитика'!A2:H")
+    assert formula.startswith("=QUERY('Аналитика'!A2:E")
     assert "magnet_delivered" in formula
     assert "handoff" in formula
 

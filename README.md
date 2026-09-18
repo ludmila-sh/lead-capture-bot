@@ -73,11 +73,17 @@ YAML. Бот перечитывает её:
 
 ### Колонки листа `events`
 
-`timestamp` · `event` · `user_id` · `username` · `name` · `segment` · `raw_param` · `reason`
+`timestamp` · `event` · `user_key` · `segment` · `status`
 
-- `start` — каждый `/start`; `segment` = ключ сегмента или `none`, `raw_param` = сырой deep-link.
+**Минимизация ПД:** username и настоящее имя намеренно НЕ попадают в Google Sheets —
+`user_key` это стабильный, необратимый хэш Telegram id (не сам id). Полные данные
+(`user_id`, `username`, `name`) остаются только в локальном `data/interactions.jsonl`
+на сервере — там же ищи контакты конкретного лида.
+
+- `start` — каждый `/start`; `segment` = ключ сегмента или `none`, `status` = сырой
+  deep-link при неизвестном параметре.
 - `magnet_delivered` — лид-магнит реально отправлен (deep-link или кнопка «Практика»).
-- `handoff` — лид ушёл эксперту (кнопка «Написать эксперту»); повод — в `reason`.
+- `handoff` — лид ушёл эксперту (кнопка «Написать эксперту»); повод — в `status`.
 - `subscribed` / `unsubscribed` — вступление/выход из канала (см. ниже).
 
 ### Трекинг подписки на канал

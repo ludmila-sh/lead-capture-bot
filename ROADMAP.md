@@ -54,6 +54,10 @@ Phased plan. Build one phase at a time. Phase 1 is the first target.
   `data/interactions.jsonl` stays the durable offline backup
 - Active only when `GOOGLE_SERVICE_ACCOUNT_JSON` + `ANALYTICS_SPREADSHEET_ID` are set —
   see `src/sheets.py`, `src/events.py` (`_SHEET_EVENTS`), README
+- **PII minimisation:** the Sheet gets `timestamp | event | user_key | segment |
+  status` only — `user_key` is a non-reversible per-user hash (`events._user_key`,
+  keyed on `BOT_TOKEN`), never the Telegram id/username/name. Full identity stays
+  only in the local `data/interactions.jsonl`.
 - Subscription tracking: `src/handlers/subscription.py` — bot must be channel admin;
   `CHANNEL_ID` for a private channel, else `@username` from `CHANNEL_URL`
 - `python -m src.sheets` — verify connection / repair header row
@@ -67,6 +71,10 @@ Phased plan. Build one phase at a time. Phase 1 is the first target.
   (`apply_overrides`, PEP 562 `__getattr__`)
 - Reload: on boot, every `TEXTS_RELOAD_SECONDS` (default 180), and on `/reload`
   from `ADMIN_IDS` (`src/handlers/admin.py`)
+- `/health` (or `/status`), same `ADMIN_IDS` gate — manual "is it alive" check:
+  uptime, today's event count from the JSONL, Google Sheets reachability (last
+  known outcome from the sink, via `sheets.health()`). Silent for non-admins;
+  not a monitoring endpoint, no HTTP server
 - Invalid edits rejected as a whole — last good texts kept, reason logged
 - Tab template seeded by `scripts/build_workspace.py`
 - Future: a Google Apps Script "Apply" button hitting the bot directly (needs an
@@ -98,4 +106,8 @@ Phased plan. Build one phase at a time. Phase 1 is the first target.
   metric out of the raw events (time-to-handoff, drop-off, repeat visitors).
 - Table archival: **decided not to bother** — volume is tiny (~100/mo is nothing).
   Revisit only if it ever gets large; then one tab per year.
+- Local `data/interactions.jsonl` rotation: **decided not to bother**, same
+  reasoning — a few hundred lines a month is nothing to rotate/archive. Writes
+  to it (and to Sheets) already fail soft — an error is logged, the handler
+  keeps going, the bot never crashes on a write failure.
 - `python -m src.sheets sync` — backfill sheet rows from JSONL after an outage.

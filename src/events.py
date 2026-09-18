@@ -11,6 +11,8 @@ raises into the handler; JSONL above is always written first.
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import json
 import logging
 from datetime import datetime, timezone
@@ -29,6 +31,20 @@ _LOG_PATH = Path(settings.interaction_log_path)
 _SHEET_EVENTS = {"start", "magnet_delivered", "handoff", "subscribed", "unsubscribed"}
 
 
+def _user_key(user_id: object) -> str:
+    """Stable, non-reversible per-user key for Sheets (never the raw id).
+
+    Keyed on BOT_TOKEN so it's stable across restarts but can't be recomputed
+    without the bot's own secret; the full user_id stays in the JSONL log.
+    """
+    if user_id is None:
+        return ""
+    digest = hmac.new(
+        settings.bot_token.encode(), str(user_id).encode(), hashlib.sha256
+    ).hexdigest()
+    return digest[:10]
+
+
 def log_event(event: str, user: User | None, **fields: object) -> None:
     """Record one interaction. Never raises — logging must not lose a lead."""
     record: dict[str, object] = {
@@ -45,19 +61,16 @@ def log_event(event: str, user: User | None, **fields: object) -> None:
         _LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
         with _LOG_PATH.open("a", encoding="utf-8") as fh:
             fh.write(json.dumps(record, ensure_ascii=False, default=str) + "\n")
-    except (OSError, TypeError, ValueError) as error:
+    except Exception as error:  # noqa: BLE001 - a log write must never break the bot
         logger.warning("could not write interaction log: %s", error)
 
     if event in _SHEET_EVENTS:
         try:
             sheets.enqueue(
                 event,
-                user_id=record["user_id"],
-                username=record["username"],
-                name=record["name"],
+                user_key=_user_key(record["user_id"]),
                 segment=fields.get("segment", ""),
-                raw_param=fields.get("raw", ""),
-                reason=fields.get("reason", ""),
+                status=fields.get("reason") or fields.get("raw") or "",
             )
         except Exception as error:  # noqa: BLE001 - analytics must not break handlers
             logger.warning("sheets enqueue failed: %s", error)

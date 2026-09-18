@@ -25,12 +25,9 @@ logger = logging.getLogger("sheets")
 COLUMNS = [
     "timestamp",
     "event",
-    "user_id",
-    "username",
-    "name",
+    "user_key",
     "segment",
-    "raw_param",
-    "reason",
+    "status",
 ]
 
 _MAX_QUEUE = 1000
@@ -38,30 +35,52 @@ _queue: "queue.Queue[dict[str, object]]" = queue.Queue(maxsize=_MAX_QUEUE)
 _worker: threading.Thread | None = None
 _worker_lock = threading.Lock()
 
+# Last known outcome of a real Sheets write attempt, for the /health command.
+# None = not attempted yet this run (nothing enqueued, or worker hasn't gotten
+# to it). Set from the background worker thread only; reads are just a dict
+# lookup, so no locking — a stale-by-one-event read is fine for a status check.
+_last_ok: bool | None = None
+_last_detail: str = ""
+_last_checked: str | None = None
+
+
+def health() -> tuple[bool | None, str, str | None]:
+    """Last known Sheets reachability: (ok, detail, checked_at ISO timestamp).
+
+    ok is None if no write has been attempted yet (including when analytics
+    is not configured at all — check settings.analytics_enabled for that).
+    """
+    return _last_ok, _last_detail, _last_checked
+
+
+def _record_health(ok: bool, detail: str = "") -> None:
+    global _last_ok, _last_detail, _last_checked
+    _last_ok = ok
+    _last_detail = detail
+    _last_checked = datetime.now(timezone.utc).isoformat(timespec="seconds")
+
 
 def enqueue(
     event: str,
     *,
-    user_id: object,
-    username: object,
-    name: object,
+    user_key: object,
     segment: object,
-    raw_param: object,
-    reason: object,
+    status: object,
 ) -> None:
-    """Queue one analytics row. Non-blocking; safe to call from async code."""
+    """Queue one anonymised analytics row. Non-blocking; safe from async code.
+
+    No user_id/username/name here by design (PII minimisation) — those stay
+    only in the local data/interactions.jsonl. `user_key` is a stable,
+    non-reversible per-user hash (see events._user_key).
+    """
     if not settings.analytics_enabled:
         return
     row = {
         "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "event": event,
-        # As text, so Sheets shows the id verbatim (not 4.2e8 / a trailing .0).
-        "user_id": "" if user_id is None else str(user_id),
-        "username": username,
-        "name": name,
+        "user_key": user_key,
         "segment": segment,
-        "raw_param": raw_param,
-        "reason": reason,
+        "status": status,
     }
     try:
         _queue.put_nowait(row)
@@ -83,7 +102,9 @@ def _run() -> None:
     try:
         worksheet = _open_worksheet()
     except Exception as error:  # noqa: BLE001 - never let the worker die noisily
-        logger.warning("Google Sheets sink disabled — %s", _explain(error))
+        detail = _explain(error)
+        logger.warning("Google Sheets sink disabled — %s", detail)
+        _record_health(False, detail)
         _drain()
         return
 
@@ -96,14 +117,13 @@ def _run() -> None:
                 # while the bot was running (one extra read per event).
                 _ensure_headers(worksheet)
                 worksheet.append_row(values, value_input_option="RAW")
+                _record_health(True)
                 break
             except Exception as error:  # noqa: BLE001
                 if attempt == 2:
-                    logger.warning(
-                        "failed to append analytics row (%s): %s",
-                        type(error).__name__,
-                        error or repr(error),
-                    )
+                    detail = f"{type(error).__name__}: {error or repr(error)}"
+                    logger.warning("failed to append analytics row (%s)", detail)
+                    _record_health(False, detail)
                 else:
                     threading.Event().wait(2.0)
         _queue.task_done()
@@ -193,12 +213,12 @@ def _cell(value: object) -> object:
 
 def _summary_formula() -> str:
     """A ready-to-paste QUERY that pivots the raw events by segment."""
-    src = f"'{settings.analytics_worksheet}'!A2:H"
+    src = f"'{settings.analytics_worksheet}'!A2:E"
     return (
-        f'=QUERY({src}, "select F, count(B), '
+        f'=QUERY({src}, "select D, count(B), '
         "sum(if(B='magnet_delivered',1,0)), sum(if(B='handoff',1,0)) "
-        "where B is not null group by F "
-        "label F 'Segment', count(B) 'Starts', "
+        "where B is not null group by D "
+        "label D 'Segment', count(B) 'Starts', "
         "sum(if(B='magnet_delivered',1,0)) 'Magnet', "
         "sum(if(B='handoff',1,0)) 'Handoff'\", 0)"
     )
@@ -211,7 +231,8 @@ def _verify_cli() -> int:
     the sheet without restarting the bot.
     """
     logging.basicConfig(
-        level=logging.INFO, format="%(levelname)s %(name)s: %(message)s"
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
     if not settings.analytics_enabled:
         print(

@@ -167,22 +167,22 @@ def build() -> None:
     _build_clients(wb, src)
 
     # 5 — Аналитика (bot-owned; keep exact name, header row only)
+    # Columns intentionally exclude user_id/username/name (PII minimisation) —
+    # user_key is a non-reversible hash; full identity stays in the bot's local
+    # data/interactions.jsonl only. Keep in sync with src.sheets.COLUMNS.
     an = wb.create_sheet("Аналитика")
     header = [
         "timestamp",
         "event",
-        "user_id",
-        "username",
-        "name",
+        "user_key",
         "segment",
-        "raw_param",
-        "reason",
+        "status",
     ]
     an.append(header)  # header only — the bot appends real rows below it
     _style_header(an, 1, len(header))
     an.freeze_panes = "A2"
-    an.column_dimensions["C"].number_format = "@"  # user_id as text
-    _autosize(an, {1: 22, 2: 18, 3: 16, 4: 18, 5: 18, 6: 12, 7: 14, 8: 26})
+    an.column_dimensions["C"].number_format = "@"  # user_key as text
+    _autosize(an, {1: 22, 2: 18, 3: 16, 4: 12, 5: 26})
 
     # 6–8 — scripts & marketing (verbatim copies with a note).
     # No "Скрипты Telegram" tab: the single source of truth for bot copy is the
@@ -352,7 +352,7 @@ def _build_dashboard(wb: Workbook) -> None:
             ws.cell(
                 row=r,
                 column=c,
-                value=f'=COUNTIFS({a}!$F:$F,$D{r},{a}!$B:$B,"{ev}")',
+                value=f'=COUNTIFS({a}!$D:$D,$D{r},{a}!$B:$B,"{ev}")',
             )
     _autosize(ws, {1: 26, 2: 14, 3: 3, 4: 16, 5: 12, 6: 12, 7: 12, 8: 12})
     ws.freeze_panes = "A4"
